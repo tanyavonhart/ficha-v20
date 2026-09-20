@@ -9,9 +9,6 @@ Ficha de personagem digital para **Vampiro: A Máscara — Edição de 20º Aniv
 [![Verificação](https://github.com/tanyavonhart/ficha-v20/actions/workflows/ci.yml/badge.svg)](https://github.com/tanyavonhart/ficha-v20/actions/workflows/ci.yml)
 [![GitHub Pages](https://github.com/tanyavonhart/ficha-v20/actions/workflows/pages.yml/badge.svg)](https://github.com/tanyavonhart/ficha-v20/actions/workflows/pages.yml)
 
-[![Publicar no Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/tanyavonhart/ficha-v20)
-
-> Trocando `SEU-USUARIO` pelo seu nome no GitHub, os selos acima passam a apontar para o seu repositório.
 
 ![A ficha no tema escuro](docs/ficha-escura.png)
 
