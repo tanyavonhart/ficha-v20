@@ -185,27 +185,6 @@ Em **💾 Arquivo → ☁️ Sincronizar**, cada aparelho ganha um **código** e
 
 > A sincronização usa uma função serverless com **Netlify Blobs** e só existe se o site for publicado com build (veja abaixo). Sem ela, a ficha funciona normalmente e apenas avisa que o serviço não está no ar.
 
-## Publicar
-
-Passo a passo completo — GitHub, GitHub Pages e Netlify — em **[docs/PUBLICAR.md](docs/PUBLICAR.md)**.
-
-
-### GitHub Pages (um clique, sem sincronização)
-
-O repositório já traz o fluxo `.github/workflows/pages.yml`. Em **Settings → Pages → Source**, escolha **GitHub Actions**. A cada `push` na `main` o site é publicado em `https://tanyavonhart.github.io/ficha-v20/`.
-
-### Netlify
-
-**Com sincronização** (recomendado): conecte este repositório no Netlify, ou rode
-
-```bash
-npm install
-netlify deploy --build --prod
-```
-
-O `netlify.toml` já aponta a pasta das funções e o `package.json` traz o `@netlify/blobs`.
-
-**Sem sincronização:** arraste a pasta no painel do Netlify (*Deploys → arraste aqui*). Todo o resto funciona igual.
 
 ## Estrutura dos arquivos
 
