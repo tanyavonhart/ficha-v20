@@ -6,7 +6,7 @@ Ficha de personagem digital para **Vampiro: A Máscara — Edição de 20º Aniv
 ![Sem dependências](https://img.shields.io/badge/dependências-nenhuma-c5a059)
 ![PWA](https://img.shields.io/badge/PWA-offline-1f6f43)
 ![Feito por fãs](https://img.shields.io/badge/projeto-não%20oficial-555)
-!https://camo.githubusercontent.com/7770596fb70cf501e3fe639a04aece5dc927b0b90870d9a1fbd66a32a26706ee/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f446973636f72642d576562686f6f6b5f496e7465677261646f2d3538363546323f7374796c653d666f722d7468652d6261646765266c6f676f3d646973636f7264266c6f676f436f6c6f723d7768697465
+![Discord Webhook](https://img.shields.io/badge/Discord-Webhook_Integrado-5865F2?style=for-the-badge&logo=discord&logoColor=white)
 [![Verificação](https://github.com/tanyavonhart/ficha-v20/actions/workflows/ci.yml/badge.svg)](https://github.com/tanyavonhart/ficha-v20/actions/workflows/ci.yml)
 [![GitHub Pages](https://github.com/tanyavonhart/ficha-v20/actions/workflows/pages.yml/badge.svg)](https://github.com/tanyavonhart/ficha-v20/actions/workflows/pages.yml)
 
