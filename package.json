@@ -1,0 +1,10 @@
+{
+  "name": "ficha-v20",
+  "private": true,
+  "version": "2.1.0",
+  "description": "Ficha de personagem de Vampiro: A Máscara (V20) com sincronização opcional entre aparelhos.",
+  "type": "module",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}

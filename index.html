@@ -1,0 +1,2009 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Vampiro: A Máscara (V20) - Ficha de Personagem</title>
+  <meta name="description" content="Ficha de personagem de Vampiro: A Máscara (V20) com rolador de dados, grimório e controle de XP.">
+  <meta name="theme-color" content="#0a0a0d">
+  <meta name="color-scheme" content="dark">
+  <meta name="format-detection" content="telephone=no">
+
+  <!-- App instalável (iPhone, iPad, Android, desktop) -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Ficha V20">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800;900&family=IM+Fell+English:ital@0;1&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet" crossorigin="anonymous">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- CAMADA DE EFEITOS IMERSIVOS -->
+  <div id="fx-layer" class="fx-layer no-print" aria-hidden="true">
+    <div id="fx-vignette" class="fx-vignette"></div>
+    <div id="fx-flash" class="fx-flash"></div>
+    <div id="fx-overlay" class="fx-overlay"></div>
+  </div>
+
+  <!-- PARTÍCULAS DE BRASA E NÉVOA (DECORATIVO) -->
+  <canvas id="ambient-canvas" class="ambient-canvas no-print" aria-hidden="true"></canvas>
+  <div class="side-aura side-aura-left no-print" aria-hidden="true"><span class="side-aura-vine"></span></div>
+  <div class="side-aura side-aura-right no-print" aria-hidden="true"><span class="side-aura-vine"></span></div>
+
+  <!-- OVERLAY SVG PARA OS CABOS FÍSICOS CURVADOS COM GRAVIDADE -->
+  <svg id="blood-web-overlay" class="blood-web-overlay" aria-hidden="true">
+    <defs>
+      <filter id="blood-glow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="2.5" result="blur1" />
+        <feGaussianBlur stdDeviation="5" result="blur2" />
+        <feMerge>
+          <feMergeNode in="blur2" />
+          <feMergeNode in="blur1" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
+    </defs>
+    <g id="blood-web-lines"></g>
+  </svg>
+
+  <!-- BARRA DE FERRAMENTAS SUPERIOR (TOOLBAR) -->
+  <header class="app-toolbar no-print">
+    <div class="toolbar-content">
+      <div class="toolbar-brand">
+        <span class="ankh-symbol" title="Ankh Vampírico">☥</span>
+        <div class="brand-text">
+          <h1>VAMPIRO: A MÁSCARA</h1>
+          <span class="edition-badge">Edição 20º Aniversário (V20) • Ficha NÃO OFICIAL FEITA POR FÃS</span>
+          <span class="app-version" data-app-version>v2.1</span>
+        </div>
+      </div>
+
+      <div class="toolbar-center">
+        <div class="char-select-wrapper">
+          <label for="character-select"><span class="icon">👤</span> Ficha:</label>
+          <select id="character-select" class="char-dropdown" aria-label="Selecione um personagem"></select>
+        </div>
+      </div>
+
+      <div class="toolbar-actions">
+        <div class="btn-group main-char-actions">
+          <button id="btn-new" class="btn btn-secondary" title="Criar novo personagem"><span class="btn-icon">➕</span><span class="btn-text">Novo</span></button>
+          <button id="btn-save" class="btn btn-primary" title="Salvar alterações no navegador"><span class="btn-icon">💾</span><span class="btn-text">Salvar</span></button>
+          <button id="btn-rename" class="btn btn-secondary" title="Renomear personagem"><span class="btn-icon">✎</span><span class="btn-text">Renomear</span></button>
+          <button id="btn-duplicate" class="btn btn-secondary" title="Duplicar personagem"><span class="btn-icon">📋</span><span class="btn-text">Duplicar</span></button>
+          <button id="btn-delete" class="btn btn-danger" title="Excluir personagem"><span class="btn-icon">🗑️</span><span class="btn-text">Excluir</span></button>
+        </div>
+
+        <div class="btn-group history-group">
+          <button type="button" id="btn-xp-mode-toolbar" class="btn btn-outline btn-xp-mode" data-xp-toggle role="switch" aria-checked="false" title="Liga ou desliga o Modo Editável XP"><span class="btn-icon">✦</span><span class="btn-text">Modo XP</span></button>
+          <button type="button" id="btn-plan-toolbar" class="btn btn-outline btn-plan-toggle" data-plan-toggle role="switch" aria-checked="false" title="Planejador: marque metas tocando nos pontos da ficha"><span class="btn-icon">🎯</span><span class="btn-text">Planejador</span></button>
+          <span id="autosave-status" class="autosave-status" aria-live="polite">Salvamento automático ativo</span>
+        </div>
+
+        <div class="btn-group layout-group">
+          <button id="btn-free-roll" class="btn btn-outline" title="Abrir o rolador com uma parada livre"><span class="btn-icon">🎲</span><span class="btn-text">Rolador</span></button>
+          <button id="btn-theme-modal" class="btn btn-outline" title="Personalizar cores e tema da ficha"><span class="btn-icon">🎨</span><span class="btn-text">Personalizar</span></button>
+          <button id="btn-discord-modal" class="btn btn-outline" title="Configurar Webhook do Discord"><span class="btn-icon">💬</span><span class="btn-text">Discord</span></button>
+          <div class="toolbar-menu" id="file-menu">
+            <button type="button" id="btn-file-menu" class="btn btn-outline" aria-haspopup="true" aria-expanded="false" aria-controls="file-menu-list" title="Exportar ou importar fichas"><span class="btn-icon">💾</span><span class="btn-text">Arquivo</span><span class="menu-caret" aria-hidden="true">▾</span></button>
+            <div id="file-menu-list" class="toolbar-menu-list" role="menu" hidden>
+              <button type="button" id="btn-export-json" class="toolbar-menu-item" role="menuitem"><span aria-hidden="true">📥</span> Exportar esta ficha</button>
+              <label for="import-json-input" class="toolbar-menu-item" role="menuitem" tabindex="0">
+                <span aria-hidden="true">📤</span> Importar arquivo
+                <input type="file" id="import-json-input" accept=".json,application/json,text/plain" class="hidden-input">
+              </label>
+              <button type="button" id="btn-file-backup" class="toolbar-menu-item" role="menuitem"><span aria-hidden="true">💾</span> Backup de todas as fichas</button>
+              <button type="button" id="btn-open-sync" class="toolbar-menu-item" role="menuitem"><span aria-hidden="true">☁️</span> Sincronizar entre aparelhos</button>
+            </div>
+          </div>
+          <button type="button" id="btn-toolbar-wiki" class="btn btn-outline only-phone" title="Compêndio & Wiki V20"><span class="btn-icon">📖</span><span class="btn-text">Wiki</span></button>
+          <button type="button" id="btn-toolbar-history" class="btn btn-outline only-phone" title="Histórico de rolagens"><span class="btn-icon">𝕮</span><span class="btn-text">Histórico</span><span class="toolbar-count" data-history-count>0</span></button>
+          <button type="button" id="btn-open-command" class="btn btn-outline" title="Rolar escrevendo ou falando (também usado pela Siri)"><span class="btn-icon">🎙️</span><span class="btn-text">Comando</span></button>
+          <button type="button" id="btn-open-layout" class="btn btn-outline" title="Minimizar e ocultar quadros, salvar presets de layout"><span class="btn-icon">🧩</span><span class="btn-text">Layout</span><span id="layout-hidden-count" class="toolbar-count" hidden>0</span></button>
+          <button type="button" id="btn-open-summary" class="btn btn-outline" title="Resumo do personagem para o Narrador e backup de todas as fichas"><span class="btn-icon">📋</span><span class="btn-text">Resumo</span></button>
+          <button id="btn-print" class="btn btn-outline" title="Imprimir ou salvar em PDF (A4, 2 páginas)"><span class="btn-icon">🖨️</span><span class="btn-text">PDF</span></button>
+          <button type="button" id="btn-install-app" class="btn btn-outline btn-install hidden" title="Instalar a ficha como app neste aparelho"><span class="btn-icon">📲</span><span class="btn-text">Instalar app</span></button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MODAL DE PERSONALIZAÇÃO DE CORES & TEMAS (NO-PRINT) -->
+  <div id="theme-customizer-modal" class="gothic-modal-overlay hidden no-print">
+    <div class="gothic-modal-box theme-modal-box">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">🎨</span>
+          <h3>PERSONALIZAÇÃO DE CORES DA FICHA</h3>
+        </div>
+        <button type="button" id="btn-close-theme-modal" class="btn-modal-close" title="Fechar">✕</button>
+      </div>
+
+      <div class="modal-body">
+        
+        <!-- PRESETS RÁPIDOS -->
+        <div class="theme-section">
+          <h4 class="theme-subtitle">🦇 Temas dos Clãs (V20):</h4>
+          <div class="presets-grid presets-grid-clans">
+            <button type="button" class="preset-btn" data-preset="ventrue"><span class="preset-circle" style="background: linear-gradient(135deg,#2f6fed 50%,#d9ae45 50%);"></span><span>👑 Ventrue</span></button>
+            <button type="button" class="preset-btn" data-preset="tremere"><span class="preset-circle" style="background: linear-gradient(135deg,#e0103a 50%,#d8a93c 50%);"></span><span>🩸 Tremere</span></button>
+            <button type="button" class="preset-btn" data-preset="toreador"><span class="preset-circle" style="background: linear-gradient(135deg,#e04b95 50%,#c99379 50%);"></span><span>🌹 Toreador</span></button>
+            <button type="button" class="preset-btn" data-preset="brujah"><span class="preset-circle" style="background: linear-gradient(135deg,#f5561b 50%,#8a939c 50%);"></span><span>🔥 Brujah</span></button>
+            <button type="button" class="preset-btn" data-preset="lasombra"><span class="preset-circle" style="background: linear-gradient(135deg,#5e4a8a 50%,#b7bcc4 50%);"></span><span>🌑 Lasombra</span></button>
+            <button type="button" class="preset-btn" data-preset="tzimisce"><span class="preset-circle" style="background: linear-gradient(135deg,#1fb877 50%,#d2ad4a 50%);"></span><span>🐉 Tzimisce</span></button>
+            <button type="button" class="preset-btn" data-preset="giovanni"><span class="preset-circle" style="background: linear-gradient(135deg,#a646c9 50%,#c7a152 50%);"></span><span>⚰️ Giovanni</span></button>
+          </div>
+          <h4 class="theme-subtitle">🎨 Cores Clássicas V20:</h4>
+          <div class="presets-grid">
+            <button type="button" class="preset-btn preset-red active" data-preset="red">
+              <span class="preset-circle" style="background: #ff1a1a;"></span>
+              <span>🔴 Vermelho (Carmesim)</span>
+            </button>
+            <button type="button" class="preset-btn preset-green" data-preset="green">
+              <span class="preset-circle" style="background: #22c55e;"></span>
+              <span>🟢 Verde (Esmeralda)</span>
+            </button>
+            <button type="button" class="preset-btn preset-purple" data-preset="purple">
+              <span class="preset-circle" style="background: #a855f7;"></span>
+              <span>🟣 Roxo (Abissal)</span>
+            </button>
+            <button type="button" class="preset-btn preset-yellow" data-preset="yellow">
+              <span class="preset-circle" style="background: #eab308;"></span>
+              <span>🟡 Amarelo (Âmbar)</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="theme-divider"></div>
+
+        <!-- SLIDERS DE CORES INDIVIDUAIS -->
+        <div class="theme-section">
+          <h4 class="theme-subtitle">🎛️ Ajuste Fino com Sliders:</h4>
+          
+          <div class="sliders-container">
+            
+            <!-- 1. Destaque Primário (Bolinhas, Sangue, Cabos) -->
+            <div class="slider-group-card">
+              <div class="slider-header-row">
+                <label>🩸 Destaque Primário (Bolinhas, Sangue, Cabos):</label>
+                <div id="preview-primary" class="color-preview-box"></div>
+              </div>
+              <div class="slider-control">
+                <span class="slider-name">Matiz (Cor):</span>
+                <input type="range" id="slider-primary-hue" min="0" max="360" value="0" class="theme-slider hue-slider">
+                <span id="val-primary-hue" class="slider-val">0°</span>
+              </div>
+              <div class="slider-control">
+                <span class="slider-name">Saturação:</span>
+                <input type="range" id="slider-primary-sat" min="0" max="100" value="100" class="theme-slider">
+                <span id="val-primary-sat" class="slider-val">100%</span>
+              </div>
+            </div>
+
+            <!-- 2. Destaque Secundário (Títulos, Bordas, Ankh) -->
+            <div class="slider-group-card">
+              <div class="slider-header-row">
+                <label>⚜️ Destaque Secundário (Títulos, Bordas, Ankh):</label>
+                <div id="preview-secondary" class="color-preview-box"></div>
+              </div>
+              <div class="slider-control">
+                <span class="slider-name">Matiz (Cor):</span>
+                <input type="range" id="slider-secondary-hue" min="0" max="360" value="40" class="theme-slider hue-slider">
+                <span id="val-secondary-hue" class="slider-val">40°</span>
+              </div>
+              <div class="slider-control">
+                <span class="slider-name">Saturação:</span>
+                <input type="range" id="slider-secondary-sat" min="0" max="100" value="70" class="theme-slider">
+                <span id="val-secondary-sat" class="slider-val">70%</span>
+              </div>
+            </div>
+
+            <!-- 3. Fundo da Ficha & Ruído -->
+            <div class="slider-group-card">
+              <div class="slider-header-row">
+                <label>🌑 Fundo da Ficha & Ruído (Noise):</label>
+                <div id="preview-bg" class="color-preview-box"></div>
+              </div>
+              <div class="slider-control">
+                <span class="slider-name">Tom do Fundo:</span>
+                <input type="range" id="slider-bg-lightness" min="4" max="22" value="8" class="theme-slider">
+                <span id="val-bg-lightness" class="slider-val">8%</span>
+              </div>
+              <div class="slider-control">
+                <span class="slider-name">Opacidade Ruído:</span>
+                <input type="range" id="slider-noise-opacity" min="0" max="15" value="7" class="theme-slider">
+                <span id="val-noise-opacity" class="slider-val">7%</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="theme-divider"></div>
+        <label class="modal-checkbox-label ambient-toggle-label">
+          <input type="checkbox" id="toggle-ambient-fx" checked>
+          Brasas e névoa animadas no fundo (desligadas automaticamente se o sistema pedir menos movimento)
+        </label>
+        <div class="ambient-box">
+          <div class="ambient-row">
+            <label for="ambient-scene">🔊 Som ambiente</label>
+            <select id="ambient-scene">
+              <option value="off">Sem trilha (silêncio)</option>
+              <option value="fire">Lareira</option>
+              <option value="rain">Chuva na janela</option>
+              <option value="bell">Sino distante e passos</option>
+            </select>
+          </div>
+          <div class="ambient-row">
+            <button type="button" id="btn-ambient-audio" class="btn-tiny" aria-pressed="false">▶ Tocar som ambiente</button>
+            <label for="ambient-volume" class="visually-hidden">Volume do som ambiente</label>
+            <input type="range" id="ambient-volume" min="0" max="100" value="35" aria-label="Volume do som ambiente">
+          </div>
+          <p class="section-hint-text">Sons suaves gerados pelo próprio navegador, sem arquivos. Abaixam sozinhos quando você rola dados.</p>
+          <button type="button" id="btn-rotschreck-fx" class="btn-tiny">🔥 Testar clarão de Rötschreck</button>
+        </div>
+        <label class="modal-checkbox-label ambient-toggle-label">
+          <input type="checkbox" id="toggle-sfx" checked>
+          Sons de ação: dados rolando, frenesi, Rötschreck, falha crítica e sucesso decisivo
+        </label>
+        <label class="modal-checkbox-label ambient-toggle-label">
+          <input type="checkbox" id="toggle-immersive-fx" checked>
+          Efeitos imersivos: fome, ferimentos, cicatrizes e animações temáticas de rolagem
+        </label>
+
+        <label class="modal-checkbox-label ambient-toggle-label">
+          <input type="checkbox" id="toggle-fx-lite">
+          Efeitos leves: sem desfoque, aura lateral e animações (bom para celular e bateria)
+        </label>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" id="btn-reset-theme" class="btn btn-secondary"><span class="btn-icon">🔄</span> Restaurar Padrão</button>
+        <button type="button" id="btn-save-theme" class="btn btn-primary"><span class="btn-icon">💾</span> Salvar Tema</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE CONFIGURAÇÃO DO DISCORD WEBHOOK (NO-PRINT) -->
+  <div id="discord-webhook-modal" class="gothic-modal-overlay hidden no-print">
+    <div class="gothic-modal-box">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">💬</span>
+          <div>
+            <h3>INTEGRAÇÃO COM DISCORD (WEBHOOK)</h3>
+            <span id="discord-modal-target-char" style="color: var(--gold-bright); font-size: 0.8rem; font-family: var(--font-body); font-weight: bold; display: block; margin-top: 2px;"></span>
+          </div>
+        </div>
+        <button type="button" id="btn-close-discord-modal" class="btn-modal-close" title="Fechar">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="modal-description">
+          Cole abaixo a URL do <strong>Webhook do Discord</strong> para vincular a este personagem. Todas as rolagens de dados feitas na ficha serão enviadas automaticamente via <code>fetch POST</code> com visual gótico e resultado detalhado!
+        </p>
+
+        <div class="modal-field-group">
+          <label for="discord-webhook-url">URL do Webhook do Discord deste Personagem:</label>
+          <input type="url" id="discord-webhook-url" class="modal-url-input" placeholder="https://discord.com/api/webhooks/...">
+        </div>
+
+        <!-- EMOTES PERSONALIZADOS DO DISCORD -->
+        <div class="modal-field-group" style="margin-top: 10px;">
+          <label style="color: var(--gold-bright); font-weight: bold; margin-bottom: 4px; display: block;">
+            🎭 Emotes Personalizados dos Dados:
+          </label>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">
+            💡 <strong>Como usar no Discord:</strong> Digite <code>\:seu_emoji:</code> no chat para copiar o código com ID (ex: <code>&lt;:critico:123456789012345678&gt;</code>) e cole abaixo:
+          </p>
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+            <div>
+              <label for="discord-emote-critico" style="font-size: 0.8rem;">Crítico (10):</label>
+              <input type="text" id="discord-emote-critico" class="modal-url-input" value="<:critico:1540580738007695512>" placeholder="<:critico:1540580738007695512>">
+            </div>
+            <div>
+              <label for="discord-emote-sucesso" style="font-size: 0.8rem;">Sucesso (>= Dif):</label>
+              <input type="text" id="discord-emote-sucesso" class="modal-url-input" value="<:sucesso:1540580820127842344>" placeholder="<:sucesso:1540580820127842344>">
+            </div>
+            <div>
+              <label for="discord-emote-falha" style="font-size: 0.8rem;">Falha (< Dif):</label>
+              <input type="text" id="discord-emote-falha" class="modal-url-input" value="<:falha:1540580800456691773>" placeholder="<:falha:1540580800456691773>">
+            </div>
+            <div>
+              <label for="discord-emote-falhacritica" style="font-size: 0.8rem;">Falha Crítica (1):</label>
+              <input type="text" id="discord-emote-falhacritica" class="modal-url-input" value="<:falhacritica:1540580772652523600>" placeholder="<:falhacritica:1540580772652523600>">
+            </div>
+          </div>
+        </div>
+
+        <details class="discord-faces-details">
+          <summary>Emotes por face do d10 (opcional)</summary>
+          <p class="discord-faces-hint">Quando preenchidos, substituem os emotes de categoria para aquela face. Ex.: <code>&lt;:d10_7:123456789012345678&gt;</code></p>
+          <div class="discord-faces-grid">
+            <label>1<input type="text" id="discord-face-1" class="modal-url-input" placeholder="<:d10_1:ID>"></label>
+            <label>2<input type="text" id="discord-face-2" class="modal-url-input" placeholder="<:d10_2:ID>"></label>
+            <label>3<input type="text" id="discord-face-3" class="modal-url-input" placeholder="<:d10_3:ID>"></label>
+            <label>4<input type="text" id="discord-face-4" class="modal-url-input" placeholder="<:d10_4:ID>"></label>
+            <label>5<input type="text" id="discord-face-5" class="modal-url-input" placeholder="<:d10_5:ID>"></label>
+            <label>6<input type="text" id="discord-face-6" class="modal-url-input" placeholder="<:d10_6:ID>"></label>
+            <label>7<input type="text" id="discord-face-7" class="modal-url-input" placeholder="<:d10_7:ID>"></label>
+            <label>8<input type="text" id="discord-face-8" class="modal-url-input" placeholder="<:d10_8:ID>"></label>
+            <label>9<input type="text" id="discord-face-9" class="modal-url-input" placeholder="<:d10_9:ID>"></label>
+            <label>10<input type="text" id="discord-face-10" class="modal-url-input" placeholder="<:d10_10:ID>"></label>
+          </div>
+        </details>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" id="btn-test-discord-webhook" class="btn btn-secondary"><span class="btn-icon">🧪</span> Testar Envio</button>
+        <button type="button" id="btn-save-discord-webhook" class="btn btn-primary"><span class="btn-icon">💾</span> Salvar Webhook</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIÁLOGO GENÉRICO (substitui prompt/confirm do navegador) -->
+  <div id="gothic-dialog" class="gothic-modal-overlay hidden no-print" role="dialog" aria-modal="true" aria-labelledby="gothic-dialog-title">
+    <div class="gothic-modal-box gothic-dialog-box">
+      <div class="modal-header">
+        <h3 id="gothic-dialog-title">Confirmar</h3>
+      </div>
+      <div class="modal-body">
+        <p id="gothic-dialog-message" class="modal-description"></p>
+        <input type="text" id="gothic-dialog-input" class="modal-url-input hidden" autocomplete="off">
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="gothic-dialog-cancel" class="btn btn-secondary">Cancelar</button>
+        <button type="button" id="gothic-dialog-ok" class="btn btn-primary">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CATÁLOGO DE QUALIDADES & DEFEITOS -->
+  <div id="merits-catalog-modal" class="gothic-modal-overlay hidden no-print" role="dialog" aria-modal="true" aria-labelledby="mf-catalog-title">
+    <div class="gothic-modal-box mf-catalog-box">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">🎭</span>
+          <div>
+            <h3 id="mf-catalog-title">QUALIDADES & DEFEITOS</h3>
+            <span id="mf-catalog-count" class="mf-catalog-count"></span>
+          </div>
+        </div>
+        <button type="button" id="btn-close-merits-catalog" class="btn-modal-close" title="Fechar" aria-label="Fechar catálogo">✕</button>
+      </div>
+      <div class="mf-catalog-filters">
+        <input type="search" id="mf-search" class="modal-url-input" placeholder="Buscar por nome ou efeito…" aria-label="Buscar Qualidades e Defeitos">
+        <select id="mf-filter-type" class="dock-diff-select" aria-label="Filtrar por tipo">
+          <option value="">Qualidades e Defeitos</option>
+          <option value="qualidade">Só Qualidades</option>
+          <option value="defeito">Só Defeitos</option>
+        </select>
+        <select id="mf-filter-cat" class="dock-diff-select" aria-label="Filtrar por categoria">
+          <option value="">Todas as categorias</option>
+          <option value="fisica">Físicas</option>
+          <option value="mental">Mentais</option>
+          <option value="social">Sociais</option>
+          <option value="sobrenatural">Sobrenaturais</option>
+        </select>
+      </div>
+      <div class="modal-body mf-catalog-body" id="mf-catalog-list"></div>
+    </div>
+  </div>
+
+  <!-- INDICADOR DO MODO XP -->
+  <div class="xp-mode-pill no-print" role="status">
+    <span class="xp-pill-icon" aria-hidden="true">✦</span>
+    <span>Modo XP · saldo <strong id="xp-mode-pill-balance">0</strong></span>
+    <button type="button" class="xp-pill-btn" data-xp-ledger-open>Histórico</button>
+    <button type="button" class="xp-pill-btn" data-xp-toggle aria-checked="true">Sair</button>
+  </div>
+
+  <!-- ASSISTENTE DE CRIAÇÃO DE PERSONAGEM -->
+  <div id="wizard-modal" class="gothic-modal-overlay hidden no-print" role="dialog" aria-modal="true" aria-labelledby="wizard-title">
+    <div class="gothic-modal-box wizard-box">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">🧛</span>
+          <h3 id="wizard-title">CRIAR PERSONAGEM (V20)</h3>
+          <span id="wizard-progress" class="wizard-progress">Passo 1 de 7</span>
+        </div>
+        <button type="button" id="btn-wizard-close" class="btn-modal-close" title="Fechar">✕</button>
+      </div>
+      <div class="wizard-layout">
+        <aside id="wizard-summary" class="wizard-summary" aria-label="Distribuição de pontos"></aside>
+        <div id="wizard-body" class="wizard-body"></div>
+      </div>
+      <div class="wizard-footer">
+        <button type="button" id="btn-wizard-blank" class="btn-tiny" title="Pular o assistente">Criar ficha em branco</button>
+        <p id="wizard-warn" class="wizard-warn" aria-live="polite"></p>
+        <button type="button" id="btn-wizard-back" class="btn btn-outline">← Voltar</button>
+        <button type="button" id="btn-wizard-next" class="btn btn-primary">Avançar →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SINCRONIZAÇÃO -->
+  <div id="sync-modal" class="gothic-modal-overlay hidden no-print" role="dialog" aria-modal="true" aria-labelledby="sync-title">
+    <div class="gothic-modal-box sync-box">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">☁️</span>
+          <h3 id="sync-title">SINCRONIZAR ENTRE APARELHOS</h3>
+        </div>
+        <button type="button" id="btn-close-sync" class="btn-modal-close" title="Fechar">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="goals-intro">Suas fichas ficam num espaço protegido por um código e um PIN. Use os mesmos nos dois aparelhos: envie de um, baixe no outro.</p>
+        <div class="sync-grid">
+          <label>Código do espaço <input type="text" id="sync-code" autocomplete="off" spellcheck="false" maxlength="16"></label>
+          <label>PIN <input type="text" id="sync-pin" inputmode="numeric" autocomplete="off" maxlength="8"></label>
+        </div>
+        <div class="sync-actions">
+          <button type="button" id="btn-sync-upload" class="btn btn-primary">⬆️ Enviar deste aparelho</button>
+          <button type="button" id="btn-sync-download" class="btn btn-outline">⬇️ Baixar para este aparelho</button>
+          <button type="button" id="btn-sync-copy" class="btn-tiny">Copiar código e PIN</button>
+          <button type="button" id="btn-sync-new-code" class="btn-tiny">Criar novo espaço</button>
+        </div>
+        <p id="sync-status" class="sync-status" aria-live="polite"></p>
+        <label class="modal-checkbox-label ambient-toggle-label">
+          <input type="checkbox" id="sync-auto">
+          Enviar sozinho alguns segundos depois de cada mudança
+        </label>
+        <details class="xp-cost-details">
+          <summary>Como funciona e o que é preciso</summary>
+          <ul class="command-list">
+            <li>Ao baixar, as fichas se juntam pelo identificador: a versão mais recente vence, e fichas novas entram sem apagar as suas.</li>
+            <li>Só funciona no site publicado (https), não com o arquivo aberto direto do computador.</li>
+            <li>Quem tiver o código e o PIN consegue ver as fichas: trate-os como senha.</li>
+            <li>O espaço guarda até 3 MB. Para apagar tudo, crie um novo espaço.</li>
+          </ul>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <!-- CICATRIZES -->
+  <div id="scars-modal" class="gothic-modal-overlay hidden no-print" role="dialog" aria-modal="true" aria-labelledby="scars-title">
+    <div class="gothic-modal-box scars-box">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">🩹</span>
+          <h3 id="scars-title">CICATRIZES</h3>
+        </div>
+        <button type="button" id="btn-close-scars" class="btn-modal-close" title="Fechar">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="goals-intro">Cada dano agravado curado deixa uma marca no retrato. Passe o mouse sobre a foto para vê-las; aqui você escreve a história de cada uma.</p>
+        <ul id="scars-list" class="scars-list"></ul>
+        <div class="goals-footer">
+          <button type="button" id="btn-add-scar" class="btn btn-outline">＋ Adicionar cicatriz</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROLAR POR COMANDO / SIRI -->
+  <div id="command-modal" class="gothic-modal-overlay hidden no-print" role="dialog" aria-modal="true" aria-labelledby="command-title">
+    <div class="gothic-modal-box command-box">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">🎙️</span>
+          <h3 id="command-title">ROLAR POR COMANDO</h3>
+        </div>
+        <button type="button" id="btn-close-command" class="btn-modal-close" title="Fechar">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="goals-intro">Escreva ou fale o que rolar. Vale Atributo, Habilidade, Disciplina, Virtude, Força de Vontade, armas, rituais e feitiços do grimório. No iPhone, o microfone do teclado também funciona.</p>
+        <div class="command-row">
+          <input type="text" id="command-input" autocomplete="off" autocapitalize="off" enterkeyhint="go" placeholder="ex.: inteligência + ocultismo dificuldade 7" aria-label="Comando de rolagem">
+          <button type="button" id="btn-command-mic" class="btn btn-outline command-mic" title="Falar o comando" aria-label="Falar o comando" hidden>🎤</button>
+          <button type="button" id="btn-command-run" class="btn btn-primary">🎲 Rolar</button>
+        </div>
+        <div id="command-recent" class="command-recent" aria-label="Comandos recentes e exemplos"></div>
+
+        <details class="xp-cost-details command-help">
+          <summary>O que dá para pedir</summary>
+          <ul class="command-list">
+            <li><strong>Parada:</strong> “destreza mais briga”, “int + ocultismo”, “percepção e prontidão dificuldade 8”</li>
+            <li><strong>Ajustes:</strong> “… mais 2 dados”, “… menos 1 dado”, “… gastando força de vontade”</li>
+            <li><strong>Sozinhos:</strong> “força de vontade dificuldade 5”, “coragem dificuldade 7”, “iniciativa”</li>
+            <li><strong>Combate:</strong> “atacar com soco”, “dano mordida”, “absorver 4 de dano letal”</li>
+            <li><strong>Grimório:</strong> “ritual defesa do refúgio”, “feitiço sedução das chamas” ou só o nome</li>
+            <li>Nomes em inglês também servem: “wits + occult difficulty 7”.</li>
+          </ul>
+        </details>
+
+        <details class="xp-cost-details command-help">
+          <summary>Configurar a Siri (Atalhos do iPhone)</summary>
+          <ol class="command-list">
+            <li>Abra o app <strong>Atalhos</strong> e toque em <strong>＋</strong>.</li>
+            <li>Adicione <strong>Solicitar Entrada</strong> (tipo Texto), com a pergunta “O que rolar?”.</li>
+            <li>Adicione <strong>Codificar URL</strong> usando a Entrada Fornecida.</li>
+            <li>Adicione <strong>URL</strong> com o endereço abaixo e, logo depois dele, a variável “Texto Codificado”.</li>
+            <li>Adicione <strong>Abrir URLs</strong>.</li>
+            <li>Dê o nome <strong>Rolar na ficha</strong>. Depois diga: “E aí Siri, rolar na ficha” → “inteligência mais ocultismo dificuldade 7”.</li>
+          </ol>
+          <div class="command-url">
+            <code id="siri-url"></code>
+            <button type="button" id="btn-copy-siri-url" class="btn-tiny">Copiar</button>
+          </div>
+          <p class="xp-form-hint">Atalho fixo, sem pergunta: uma ação <strong>URL</strong> com <code id="siri-url-example"></code> e <strong>Abrir URLs</strong>, com o nome “Rolar iniciativa”. Para escolher a ficha, acrescente <code>&amp;ficha=Arthur</code>.</p>
+          <p class="xp-form-hint command-warning">⚠️ No iOS, links abertos pela Siri vão para o <strong>Safari</strong>, não para a ficha instalada na Tela de Início, e os dois guardam fichas separadas. Para usar a Siri, mantenha suas fichas também no Safari (📥 Exportar → 📤 Importar). Os resultados vão para o Discord do mesmo jeito.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <!-- LAYOUT DA FICHA -->
+  <div id="layout-modal" class="gothic-modal-overlay hidden no-print" role="dialog" aria-modal="true" aria-labelledby="layout-title">
+    <div class="gothic-modal-box layout-box">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">🧩</span>
+          <h3 id="layout-title">LAYOUT DA FICHA</h3>
+        </div>
+        <button type="button" id="btn-close-layout" class="btn-modal-close" title="Fechar">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="goals-intro">Escolha o que aparece nesta ficha. Também dá para usar ▾ e 👁 no título de cada quadro. A impressão sempre sai completa.</p>
+        <div id="layout-sections" class="layout-sections"></div>
+        <div class="goals-footer layout-footer">
+          <button type="button" id="btn-layout-reset" class="btn-tiny">Mostrar e expandir tudo</button>
+          <button type="button" id="btn-reset-layout" class="btn-tiny" title="Devolve as janelas arrastadas às posições e tamanhos originais">🔄 Resetar posições das janelas</button>
+        </div>
+        <div class="theme-divider"></div>
+        <h4 class="xp-ledger-heading">Presets de layout</h4>
+        <p class="xp-form-hint">Os de fábrica já vêm prontos. Os seus salvam o que está oculto, minimizado e a posição das janelas. Marque “barra rápida” para trocar com um toque acima da ficha.</p>
+        <div class="goals-add-row">
+          <input type="text" id="layout-preset-name" placeholder="Nome do preset (ex.: Combate)" aria-label="Nome do preset">
+          <button type="button" id="btn-layout-save" class="btn btn-outline">Salvar layout atual</button>
+        </div>
+        <ul id="layout-presets" class="layout-presets"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESUMO PARA O NARRADOR E BACKUP -->
+  <div id="summary-modal" class="gothic-modal-overlay hidden no-print" role="dialog" aria-modal="true" aria-labelledby="summary-title">
+    <div class="gothic-modal-box summary-box">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">📋</span>
+          <h3 id="summary-title">RESUMO DO PERSONAGEM</h3>
+        </div>
+        <button type="button" id="btn-close-summary" class="btn-modal-close" title="Fechar">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="goals-intro">Texto compacto com traços, poderes, sangue, Força de Vontade e ferimentos atuais. Cole na conversa com o Narrador para ele saber exatamente quem é seu personagem.</p>
+        <textarea id="summary-output" class="summary-output" rows="14" readonly aria-label="Resumo do personagem"></textarea>
+        <div class="summary-actions">
+          <button type="button" id="btn-summary-share" class="btn btn-outline" hidden>Compartilhar</button>
+          <button type="button" id="btn-summary-copy" class="btn btn-primary">Copiar resumo</button>
+        </div>
+        <div class="theme-divider"></div>
+        <h4 class="xp-ledger-heading">Backup de todas as fichas</h4>
+        <p class="xp-form-hint">Salva as <strong id="backup-count">0</strong> ficha(s) deste aparelho em um único arquivo. Para restaurar, use 📤 Importar com esse arquivo.</p>
+        <button type="button" id="btn-backup-all" class="btn btn-outline">💾 Exportar todas as fichas</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- INDICADOR DO PLANEJAMENTO -->
+  <div class="plan-mode-pill no-print" role="status">
+    <span class="xp-pill-icon" aria-hidden="true">🎯</span>
+    <span>Planejando · <strong id="plan-pill-text">toque nos pontos para marcar metas</strong></span>
+    <button type="button" class="xp-pill-btn" data-goals-open>Objetivos</button>
+    <button type="button" class="xp-pill-btn" data-plan-toggle aria-checked="true">Concluir</button>
+  </div>
+
+  <!-- OBJETIVOS DE BUILD -->
+  <div id="goals-modal" class="gothic-modal-overlay hidden no-print" role="dialog" aria-modal="true" aria-labelledby="goals-title">
+    <div class="gothic-modal-box goals-box">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">🎯</span>
+          <h3 id="goals-title">OBJETIVOS DE BUILD</h3>
+        </div>
+        <button type="button" id="btn-close-goals" class="btn-modal-close" title="Fechar">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="goals-intro">Marque o nível que você quer em cada traço e a ordem de prioridade. Ao lançar XP ganho, a ficha compra o que o saldo permitir.</p>
+
+        <div class="goals-controls">
+          <button type="button" id="btn-goals-mark" class="btn btn-primary">🎯 Marcar metas na ficha</button>
+          <button type="button" class="xp-mode-switch" data-plan-toggle role="switch" aria-checked="false">
+            <span class="xp-switch-track" aria-hidden="true"><span class="xp-switch-thumb"></span></span>
+            <span class="xp-switch-text">Modo Planejamento</span>
+          </button>
+          <label class="xp-option"><input type="checkbox" id="goal-auto-buy" checked> Comprar automaticamente ao lançar XP ganho</label>
+          <label class="goals-order-label">Sem XP para a meta da vez:
+            <select id="goal-order">
+              <option value="wait">guardar XP para ela</option>
+              <option value="skip">comprar as seguintes</option>
+            </select>
+          </label>
+        </div>
+
+        <p id="goals-modal-summary" class="xp-ledger-summary"></p>
+        <ol id="goals-list" class="goals-list"></ol>
+        <div class="goals-footer">
+          <button type="button" id="btn-goals-clear-done" class="btn-tiny">Limpar concluídos</button>
+          <button type="button" id="btn-goals-buy-all" class="btn btn-primary">Comprar agora o que der</button>
+        </div>
+
+        <fieldset class="xp-fieldset goals-add">
+          <legend>Adicionar ritual, especialização ou custo</legend>
+          <div class="goals-add-row">
+            <select id="goal-new-kind" aria-label="Tipo de objetivo">
+              <option value="ritual">Ritual</option>
+              <option value="specialty">Especialização</option>
+              <option value="custom">Custo personalizado</option>
+            </select>
+            <input type="text" id="goal-new-name" placeholder="Nome do ritual" aria-label="Nome">
+            <select id="goal-new-level" data-goal-field="ritual" aria-label="Nível do ritual">
+              <option value="1">Nível 1</option><option value="2">Nível 2</option><option value="3">Nível 3</option>
+              <option value="4">Nível 4</option><option value="5">Nível 5</option><option value="6">Nível 6</option>
+              <option value="7">Nível 7</option><option value="8">Nível 8</option><option value="9">Nível 9</option>
+            </select>
+            <select id="goal-new-tradition" data-goal-field="ritual" aria-label="Tradição">
+              <option value="taumaturgia">Taumatúrgico</option>
+              <option value="necromancia">Necromântico</option>
+              <option value="outro">Outro</option>
+            </select>
+            <input type="number" id="goal-new-amount" data-goal-field="custom" min="1" max="9999" inputmode="numeric" placeholder="XP" aria-label="Custo em XP" hidden>
+            <span id="goal-new-cost-preview" class="goal-cost-preview" data-goal-field="ritual specialty"></span>
+            <button type="button" id="btn-goal-add" class="btn btn-outline">Adicionar</button>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTÓRICO E CUSTOS DE XP -->
+  <div id="xp-ledger-modal" class="gothic-modal-overlay hidden no-print" role="dialog" aria-modal="true" aria-labelledby="xp-ledger-title">
+    <div class="gothic-modal-box xp-ledger-box">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">✦</span>
+          <h3 id="xp-ledger-title">HISTÓRICO DE EXPERIÊNCIA</h3>
+        </div>
+        <button type="button" id="btn-close-xp-ledger" class="btn-modal-close" title="Fechar">✕</button>
+      </div>
+      <div class="modal-body">
+        <p id="xp-ledger-summary" class="xp-ledger-summary"></p>
+
+        <div class="xp-ledger-grid">
+          <fieldset class="xp-fieldset">
+            <legend>Novo lançamento</legend>
+            <div class="xp-entry-kind" role="radiogroup" aria-label="Tipo de lançamento">
+              <label class="is-selected"><input type="radio" name="xp-entry-kind" value="gain" checked> ＋ XP ganho</label>
+              <label><input type="radio" name="xp-entry-kind" value="spend"> − XP gasto</label>
+            </div>
+            <div id="xp-spend-extra" class="xp-spend-extra" hidden>
+              <select id="xp-spend-category" aria-label="Tipo de gasto">
+                <option value="custom">Custo personalizado</option>
+                <option value="ritual">Ritual</option>
+              </select>
+              <div id="xp-ritual-extra" class="xp-ritual-extra" hidden>
+                <select id="xp-ritual-level" aria-label="Nível do ritual">
+                  <option value="1">Nível 1</option><option value="2">Nível 2</option><option value="3">Nível 3</option>
+                  <option value="4">Nível 4</option><option value="5">Nível 5</option><option value="6">Nível 6</option>
+                  <option value="7">Nível 7</option><option value="8">Nível 8</option><option value="9">Nível 9</option>
+                </select>
+                <select id="xp-ritual-tradition" aria-label="Tradição">
+                  <option value="taumaturgia">Taumatúrgico</option>
+                  <option value="necromancia">Necromântico</option>
+                  <option value="outro">Outro</option>
+                </select>
+                <label class="xp-option"><input type="checkbox" id="xp-ritual-add" checked> Adicionar ao Grimório</label>
+              </div>
+            </div>
+            <div class="xp-gain-row">
+              <input type="number" id="xp-gain-amount" min="1" max="9999" inputmode="numeric" placeholder="XP" aria-label="Quantidade de XP">
+              <input type="text" id="xp-gain-reason" placeholder="Motivo (ex.: Sessão 12)" aria-label="Descrição">
+              <button type="button" id="btn-xp-add-gain" class="btn btn-primary">Registrar ganho</button>
+            </div>
+            <p class="xp-form-hint">Ritual sugere o custo nível × 2, mas você pode digitar outro valor.</p>
+          </fieldset>
+
+          <fieldset class="xp-fieldset">
+            <legend>Saldo inicial (antes do modo automático)</legend>
+            <div class="xp-base-row">
+              <label>Total <input type="number" id="xp-base-total" min="0" max="99999"></label>
+              <label>Gasto <input type="number" id="xp-base-spent" min="0" max="99999"></label>
+            </div>
+            <label class="xp-option"><input type="checkbox" id="xp-allow-negative"> Permitir comprar com saldo negativo</label>
+            <label class="xp-option"><input type="checkbox" id="xp-background-rule"> Regra da casa: Antecedentes custam XP (novo 3, depois nível × 3)</label>
+          </fieldset>
+        </div>
+
+        <h4 class="xp-ledger-heading">Registros</h4>
+        <ul id="xp-ledger-list" class="xp-ledger-list"></ul>
+        <div class="xp-ledger-footer">
+          <button type="button" id="btn-xp-clear-log" class="btn-tiny btn-tiny-danger">Limpar histórico</button>
+        </div>
+
+        <details class="xp-cost-details">
+          <summary>Tabela de custos V20</summary>
+          <div class="xp-cost-scroll">
+            <table class="xp-cost-table">
+              <thead><tr><th>Característica</th><th>Custo</th><th>Observação</th></tr></thead>
+              <tbody id="xp-cost-table-body"></tbody>
+            </table>
+          </div>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABAS DE NAVEGAÇÃO DE PÁGINAS (NO-PRINT) -->
+  <div class="sheet-tabs-nav no-print">
+    <button type="button" class="tab-nav-btn active" data-tab="page-1">
+      <span class="tab-icon">📜</span> Página 1: Traços Principais & Status
+    </button>
+    <button type="button" class="tab-nav-btn" data-tab="page-2">
+      <span class="tab-icon">📖</span> Página 2: Grimório, Caminhos & Qualidades
+    </button>
+    <button type="button" class="tab-nav-btn" data-tab="all-pages">
+      <span class="tab-icon">👁️</span> Ver Ambas as Páginas
+    </button>
+  </div>
+  <div id="layout-quickbar" class="layout-quickbar no-print" role="toolbar" aria-label="Layouts rápidos"></div>
+
+  <!-- NOTIFICAÇÃO TOAST FLUTUANTE -->
+  <!-- AVISO DE PRIMEIRO ACESSO (NO-PRINT) -->
+  <div id="welcome-modal" class="gothic-modal-overlay hidden no-print" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
+    <div class="gothic-modal-box welcome-modal-box">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">☥</span>
+          <h3 id="welcome-title">ANTES DE COMEÇAR SUA CRÔNICA</h3>
+        </div>
+      </div>
+      <div class="modal-body">
+        <p class="welcome-intro">Esta ficha é uma <strong>aplicação web rápida e segura</strong>. Veja como funciona o salvamento:</p>
+        <div class="welcome-grid">
+          <div class="welcome-card"><span class="welcome-icon">💾</span><h4>Salvamento no seu navegador</h4><p>Fichas e histórico ficam só no <code>localStorage</code> deste aparelho.</p></div>
+          <div class="welcome-card"><span class="welcome-icon">📥</span><h4>Faça backups</h4><p>Use <strong>📥 Exportar</strong> para guardar cópias <code>.json</code> no PC ou celular.</p></div>
+          <div class="welcome-card"><span class="welcome-icon">🕶️</span><h4>Cuidado com abas anônimas</h4><p>No modo anônimo, tudo é descartado quando a janela fecha.</p></div>
+          <div class="welcome-card"><span class="welcome-icon">💬</span><h4>Webhook do Discord</h4><p>A URL fica gravada apenas neste aparelho e é enviada direto ao Discord.</p></div>
+        </div>
+        <label class="welcome-check"><input type="checkbox" id="welcome-dont-show" checked> Não mostrar este aviso novamente neste navegador</label>
+        <button type="button" id="btn-welcome-continue" class="btn btn-primary welcome-continue">🩸 Entendi e desejo continuar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <!-- CONTAINER GERAL DAS PÁGINAS DA FICHA -->
+  <div class="sheet-viewport">
+    
+    <!-- ====================================================================
+         PÁGINA 1: ATRIBUTOS, HABILIDADES, VANTAGENS & STATUS
+         ==================================================================== -->
+    <main class="sheet-card page-container" id="page-1">
+      
+      <div class="gothic-header-ornament">
+        <div class="ornament-line"></div>
+        <div class="ornament-center">
+          <span class="gothic-ankh">☥</span>
+          <h2>VAMPIRE: THE MASQUERADE</h2>
+          <span class="sheet-subtitle">20th ANNIVERSARY EDITION • PÁGINA 1: PRINCIPAL</span>
+          <div class="edition-switch no-print" role="radiogroup" aria-label="Edição do jogo">
+            <button type="button" role="radio" data-edition="v20" aria-checked="true" class="is-active">V20</button>
+            <button type="button" role="radio" data-edition="da" aria-checked="false">Dark Ages 20</button>
+          </div>
+          <button type="button" id="btn-parchment-toggle" class="parchment-toggle no-print" title="Tema pergaminho: automático no Dark Ages, sempre ou nunca">📜 Pergaminho: automático</button>
+        </div>
+        <div class="ornament-line"></div>
+      </div>
+
+      <!-- 1. CABEÇALHO COM FOTO DE PERFIL NO LADO DIREITO -->
+      <section class="sheet-section header-section" id="win-header">
+        <div class="header-flex-wrapper">
+          
+          <div class="header-grid">
+            <div class="field-item"><label for="char-name">Nome:</label><input type="text" id="char-name" data-bind="header.name" placeholder="Nome do Personagem"></div>
+            <div class="field-item"><label for="char-player">Jogador:</label><input type="text" id="char-player" data-bind="header.player" placeholder="Seu Nome"></div>
+            <div class="field-item"><label for="char-chronicle">Crônica:</label><input type="text" id="char-chronicle" data-bind="header.chronicle" placeholder="Nome da Crônica"></div>
+
+            <div class="field-item"><label for="char-nature">Natureza:</label><input type="text" id="char-nature" data-bind="header.nature" placeholder="Arquétipo Íntimo"></div>
+            <div class="field-item"><label for="char-demeanor">Comportamento:</label><input type="text" id="char-demeanor" data-bind="header.demeanor" placeholder="Máscara Social"></div>
+            <div class="field-item clan-field-item">
+              <label for="char-clan-select">Clã:</label>
+              <div class="clan-select-wrapper">
+                <select id="char-clan-select" class="generation-dropdown" title="Escolher um clã preenche as Disciplinas de clã e a Fraqueza">
+                  <option value="">Escolha um clã…</option>
+                </select>
+                <input type="text" id="char-clan" data-bind="header.clan" class="hidden" placeholder="Nome do clã ou linhagem" aria-label="Clã personalizado">
+              </div>
+            </div>
+
+            <div class="field-item generation-field-item">
+              <label for="char-generation">Geração:</label>
+              <div class="generation-select-wrapper generation-stepper">
+                <button type="button" class="btn-gen-step no-print" data-gen-step="-1" aria-label="Geração mais antiga">▲</button>
+                <select id="char-generation" data-bind="header.generation" class="generation-dropdown" title="Geração: define reserva de sangue e gasto por turno">
+                  <option value="15ª">15ª Geração · 10 PS</option>
+                  <option value="14ª">14ª Geração · 10 PS</option>
+                  <option value="13ª" selected>13ª Geração · 10 PS</option>
+                  <option value="12ª">12ª Geração · 11 PS</option>
+                  <option value="11ª">11ª Geração · 12 PS</option>
+                  <option value="10ª">10ª Geração · 13 PS</option>
+                  <option value="9ª">9ª Geração · 14 PS</option>
+                  <option value="8ª">8ª Geração · 15 PS</option>
+                  <option value="7ª">7ª Geração · 20 PS</option>
+                  <option value="6ª">6ª Geração · 30 PS</option>
+                  <option value="5ª">5ª Geração · 40 PS</option>
+                  <option value="4ª">4ª Geração · 50 PS</option>
+                  <option value="3ª">3ª Geração · 100 PS</option>
+                </select>
+                <button type="button" class="btn-gen-step no-print" data-gen-step="1" aria-label="Geração mais nova">▼</button>
+              </div>
+            </div>
+            <div class="field-item"><label for="char-sire">Senhor:</label><input type="text" id="char-sire" data-bind="header.sire" placeholder="Quem realizou o Abraço"></div>
+            <div class="field-item"><label for="char-concept">Conceito:</label><input type="text" id="char-concept" data-bind="header.concept" placeholder="Ex: Antiquário Noturno"></div>
+          </div>
+
+          <!-- FOTO DE PERFIL DO PERSONAGEM (DIREITA) -->
+          <div class="header-avatar-box">
+            <div class="avatar-frame" id="char-avatar-frame" title="Clique para enviar ou alterar a foto">
+              <div id="fx-scars" class="fx-scars"></div>
+              <img id="char-avatar-img" class="avatar-img hidden" alt="Foto do Personagem">
+              <div id="char-avatar-placeholder" class="avatar-placeholder">
+                <span class="avatar-icon">👤</span>
+                <span class="avatar-text">Foto de Perfil</span>
+              </div>
+            </div>
+            <div id="avatar-states" class="avatar-states" aria-live="polite"></div>
+            <div class="avatar-state-row no-print">
+              <button type="button" id="btn-toggle-torpor" class="btn-avatar-action btn-torpor" aria-pressed="false" title="Marcar ou desmarcar torpor">💤 Torpor</button>
+              <button type="button" id="btn-open-scars" class="btn-avatar-action btn-scars-open" title="Cicatrizes: ver, adicionar e anotar como foram recebidas" aria-label="Abrir cicatrizes">🩹<span id="scars-count" class="scars-count" hidden>0</span></button>
+            </div>
+            <div class="avatar-actions no-print">
+              <label for="char-avatar-input" class="btn-avatar-action" title="Fazer upload de imagem">
+                📷 Foto
+                <input type="file" id="char-avatar-input" accept="image/*" class="hidden-input">
+              </label>
+              <button type="button" id="btn-avatar-url" class="btn-avatar-action" title="Inserir link URL da imagem">🔗 Link</button>
+              <button type="button" id="btn-avatar-remove" class="btn-avatar-action btn-avatar-remove hidden" title="Remover foto">✕</button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- 2. ATRIBUTOS (1 A 9) -->
+      <section class="sheet-section section-traits" data-lock-section="attributes">
+        <div class="section-banner"><h3>ATRIBUTOS</h3><button type="button" class="btn-section-lock no-print" data-lock-toggle="attributes" aria-pressed="false" title="Travar Atributos">🔓</button></div>
+        <div class="three-col-grid">
+          
+          <div class="trait-category draggable-card" data-window-id="win-attr-physical">
+            <h4 class="category-heading draggable-handle"><span class="drag-grip">✥</span> FÍSICOS</h4>
+            <div class="trait-list">
+              <div class="trait-row" data-trait="attributes.physical.strength" data-label="Força">
+                <button type="button" class="trait-link-node" title="Conectar Força" aria-label="Linkar Força"></button>
+                <span class="trait-name">Força</span>
+                <div class="dots-group dots-9" data-min="1" data-max="9" data-val="1"></div>
+              </div>
+              <div class="trait-row" data-trait="attributes.physical.dexterity" data-label="Destreza">
+                <button type="button" class="trait-link-node" title="Conectar Destreza" aria-label="Linkar Destreza"></button>
+                <span class="trait-name">Destreza</span>
+                <div class="dots-group dots-9" data-min="1" data-max="9" data-val="1"></div>
+              </div>
+              <div class="trait-row" data-trait="attributes.physical.stamina" data-label="Vigor">
+                <button type="button" class="trait-link-node" title="Conectar Vigor" aria-label="Linkar Vigor"></button>
+                <span class="trait-name">Vigor</span>
+                <div class="dots-group dots-9" data-min="1" data-max="9" data-val="1"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="trait-category draggable-card" data-window-id="win-attr-social">
+            <h4 class="category-heading draggable-handle"><span class="drag-grip">✥</span> SOCIAIS</h4>
+            <div class="trait-list">
+              <div class="trait-row" data-trait="attributes.social.charisma" data-label="Carisma">
+                <button type="button" class="trait-link-node" title="Conectar Carisma" aria-label="Linkar Carisma"></button>
+                <span class="trait-name">Carisma</span>
+                <div class="dots-group dots-9" data-min="1" data-max="9" data-val="1"></div>
+              </div>
+              <div class="trait-row" data-trait="attributes.social.manipulation" data-label="Manipulação">
+                <button type="button" class="trait-link-node" title="Conectar Manipulação" aria-label="Linkar Manipulação"></button>
+                <span class="trait-name">Manipulação</span>
+                <div class="dots-group dots-9" data-min="1" data-max="9" data-val="1"></div>
+              </div>
+              <div class="trait-row" data-trait="attributes.social.appearance" data-label="Aparência">
+                <button type="button" class="trait-link-node" title="Conectar Aparência" aria-label="Linkar Aparência"></button>
+                <span class="trait-name">Aparência</span>
+                <div class="dots-group dots-9" data-min="1" data-max="9" data-val="1"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="trait-category draggable-card" data-window-id="win-attr-mental">
+            <h4 class="category-heading draggable-handle"><span class="drag-grip">✥</span> MENTAIS</h4>
+            <div class="trait-list">
+              <div class="trait-row" data-trait="attributes.mental.perception" data-label="Percepção">
+                <button type="button" class="trait-link-node" title="Conectar Percepção" aria-label="Linkar Percepção"></button>
+                <span class="trait-name">Percepção</span>
+                <div class="dots-group dots-9" data-min="1" data-max="9" data-val="1"></div>
+              </div>
+              <div class="trait-row" data-trait="attributes.mental.intelligence" data-label="Inteligência">
+                <button type="button" class="trait-link-node" title="Conectar Inteligência" aria-label="Linkar Inteligência"></button>
+                <span class="trait-name">Inteligência</span>
+                <div class="dots-group dots-9" data-min="1" data-max="9" data-val="1"></div>
+              </div>
+              <div class="trait-row" data-trait="attributes.mental.wits" data-label="Raciocínio">
+                <button type="button" class="trait-link-node" title="Conectar Raciocínio" aria-label="Linkar Raciocínio"></button>
+                <span class="trait-name">Raciocínio</span>
+                <div class="dots-group dots-9" data-min="1" data-max="9" data-val="1"></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- 3. HABILIDADES (0 A 9) -->
+      <section class="sheet-section section-traits" data-lock-section="abilities">
+        <div class="section-banner"><h3>HABILIDADES</h3><button type="button" class="btn-section-lock no-print" data-lock-toggle="abilities" aria-pressed="false" title="Travar Habilidades">🔓</button></div>
+        <div class="three-col-grid">
+          
+          <div class="trait-category draggable-card" data-window-id="win-talents">
+            <h4 class="category-heading draggable-handle"><span class="drag-grip">✥</span> TALENTOS</h4>
+            <div class="trait-list">
+              <div class="trait-row" data-trait="abilities.talents.alertness" data-label="Prontidão"><button type="button" class="trait-link-node" title="Conectar Prontidão"></button><span class="trait-name">Prontidão</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+              <div class="trait-row" data-trait="abilities.talents.athletics" data-label="Esportes"><button type="button" class="trait-link-node" title="Conectar Esportes"></button><span class="trait-name">Esportes</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+              <div class="trait-row" data-trait="abilities.talents.brawl" data-label="Briga"><button type="button" class="trait-link-node" title="Conectar Briga"></button><span class="trait-name">Briga</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+              <div class="trait-row" data-trait="abilities.talents.foresight" data-label="Presciência"><button type="button" class="trait-link-node" title="Conectar Presciência"></button><span class="trait-name">Presciência</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+              <div class="trait-row" data-trait="abilities.talents.empathy" data-label="Empatia"><button type="button" class="trait-link-node" title="Conectar Empatia"></button><span class="trait-name">Empatia</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+              <div class="trait-row" data-trait="abilities.talents.expression" data-label="Expressão"><button type="button" class="trait-link-node" title="Conectar Expressão"></button><span class="trait-name">Expressão</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+              <div class="trait-row" data-trait="abilities.talents.intimidation" data-label="Intimidação"><button type="button" class="trait-link-node" title="Conectar Intimidação"></button><span class="trait-name">Intimidação</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+              <div class="trait-row" data-trait="abilities.talents.leadership" data-label="Liderança"><button type="button" class="trait-link-node" title="Conectar Liderança"></button><span class="trait-name">Liderança</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+              <div class="trait-row" data-trait="abilities.talents.streetwise" data-label="Manha"><button type="button" class="trait-link-node" title="Conectar Manha"></button><span class="trait-name">Manha</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+              <div class="trait-row" data-trait="abilities.talents.subterfuge" data-label="Lábia"><button type="button" class="trait-link-node" title="Conectar Lábia"></button><span class="trait-name">Lábia</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+            </div>
+          </div>
+
+          <div class="trait-category draggable-card" data-window-id="win-skills">
+            <h4 class="category-heading draggable-handle"><span class="drag-grip">✥</span> PERÍCIAS</h4>
+            <div class="trait-list">
+              <div class="trait-row" data-trait="abilities.skills.animal_ken" data-label="Empatia c/ Animais"><button type="button" class="trait-link-node" title="Conectar Empatia c/ Animais"></button><span class="trait-name">Empatia c/ Animais</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+              <div class="trait-row" data-trait="abilities.skills.crafts" data-label="Ofícios"><button type="button" class="trait-link-node" title="Conectar Ofícios"></button><span class="trait-name">Ofícios</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+              <div class="trait-row" data-trait="abilities.skills.drive" data-label="Condução"><button type="button" class="trait-link-node" title="Conectar Condução"></button><span class="trait-name">Condução</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+              <div class="trait-row" data-trait="abilities.skills.etiquette" data-label="Etiqueta"><button type="button" class="trait-link-node" title="Conectar Etiqueta"></button><span class="trait-name">Etiqueta</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+              <div class="trait-row" data-trait="abilities.skills.firearms" data-label="Armas de Fogo"><button type="button" class="trait-link-node" title="Conectar Armas de Fogo"></button><span class="trait-name">Armas de Fogo</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+              <div class="trait-row" data-trait="abilities.skills.melee" data-label="Armas Brancas"><button type="button" class="trait-link-node" title="Conectar Armas Brancas"></button><span class="trait-name">Armas Brancas</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+              <div class="trait-row" data-trait="abilities.skills.performance" data-label="Performance"><button type="button" class="trait-link-node" title="Conectar Performance"></button><span class="trait-name">Performance</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+              <div class="trait-row" data-trait="abilities.skills.larceny" data-label="Furto"><button type="button" class="trait-link-node" title="Conectar Furto"></button><span class="trait-name">Furto</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+              <div class="trait-row" data-trait="abilities.skills.stealth" data-label="Furtividade"><button type="button" class="trait-link-node" title="Conectar Furtividade"></button><span class="trait-name">Furtividade</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+              <div class="trait-row" data-trait="abilities.skills.survival" data-label="Sobrevivência"><button type="button" class="trait-link-node" title="Conectar Sobrevivência"></button><span class="trait-name">Sobrevivência</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+            </div>
+          </div>
+
+          <div class="trait-category draggable-card" data-window-id="win-knowledges">
+            <h4 class="category-heading draggable-handle"><span class="drag-grip">✥</span> CONHECIMENTOS</h4>
+            <div class="trait-list">
+              <div class="trait-row" data-trait="abilities.knowledges.academics" data-label="Acadêmicos"><button type="button" class="trait-link-node" title="Conectar Acadêmicos"></button><span class="trait-name">Acadêmicos</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+              <div class="trait-row" data-trait="abilities.knowledges.computer" data-label="Computador"><button type="button" class="trait-link-node" title="Conectar Computador"></button><span class="trait-name">Computador</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+              <div class="trait-row" data-trait="abilities.knowledges.finance" data-label="Finanças"><button type="button" class="trait-link-node" title="Conectar Finanças"></button><span class="trait-name">Finanças</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+              <div class="trait-row" data-trait="abilities.knowledges.investigation" data-label="Investigação"><button type="button" class="trait-link-node" title="Conectar Investigação"></button><span class="trait-name">Investigação</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+              <div class="trait-row" data-trait="abilities.knowledges.law" data-label="Direito"><button type="button" class="trait-link-node" title="Conectar Direito"></button><span class="trait-name">Direito</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+              <div class="trait-row" data-trait="abilities.knowledges.medicine" data-label="Medicina"><button type="button" class="trait-link-node" title="Conectar Medicina"></button><span class="trait-name">Medicina</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+              <div class="trait-row" data-trait="abilities.knowledges.occult" data-label="Ocultismo"><button type="button" class="trait-link-node" title="Conectar Ocultismo"></button><span class="trait-name">Ocultismo</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+              <div class="trait-row" data-trait="abilities.knowledges.politics" data-label="Política"><button type="button" class="trait-link-node" title="Conectar Política"></button><span class="trait-name">Política</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+              <div class="trait-row" data-trait="abilities.knowledges.science" data-label="Ciência"><button type="button" class="trait-link-node" title="Conectar Ciência"></button><span class="trait-name">Ciência</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+              <div class="trait-row" data-trait="abilities.knowledges.technology" data-label="Tecnologia"><button type="button" class="trait-link-node" title="Conectar Tecnologia"></button><span class="trait-name">Tecnologia</span><div class="dots-group dots-9" data-min="0" data-max="9" data-val="0"></div></div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- 4. SEÇÃO VANTAGENS UNIFICADA (3 COLUNAS PERFEITAS DA IMAGEM) -->
+      <section class="sheet-section section-advantages-complete" data-lock-section="advantages">
+        <div class="section-banner"><h3>VANTAGENS</h3><button type="button" id="btn-quick-willpower" class="btn-quick-roll no-print" title="Rola a Força de Vontade permanente contra dificuldade 6">🎲 Rolar FV</button><button type="button" class="btn-section-lock no-print" data-lock-toggle="advantages" aria-pressed="false" title="Travar Vantagens">🔓</button></div>
+        <div class="three-col-grid advantages-unified-grid">
+          
+          <!-- COLUNA 1 (ESQUERDA): DISCIPLINAS -> ESPECIALIZAÇÕES -> EXPERIÊNCIA -->
+          <div class="vantagens-col">
+            
+            <!-- 1. Disciplinas (0 a 9) -->
+            <div class="trait-category dynamic-category draggable-card" data-window-id="win-disciplines">
+              <div class="dynamic-category-header draggable-handle">
+                <h4 class="category-heading"><span class="drag-grip">✥</span> DISCIPLINAS</h4>
+                <button type="button" id="btn-add-discipline" class="btn-add-trait" title="Adicionar Disciplina">＋</button>
+              </div>
+              <div id="disciplines-list" class="dynamic-trait-list"></div>
+            </div>
+
+            <!-- 2. Especializações (0 a 9) -->
+            <div class="trait-category dynamic-category draggable-card" data-window-id="win-specializations">
+              <div class="dynamic-category-header draggable-handle">
+                <h4 class="category-heading"><span class="drag-grip">✥</span> ESPECIALIZAÇÕES</h4>
+                <button type="button" id="btn-add-specialization" class="btn-add-trait" title="Adicionar Especialização">＋</button>
+              </div>
+              <div id="specializations-list" class="dynamic-trait-list"></div>
+            </div>
+
+            <!-- 3. Experiência -->
+            <div class="status-card xp-card draggable-card" data-window-id="win-xp">
+              <h4 class="category-heading draggable-handle"><span class="drag-grip">✥</span> EXPERIÊNCIA</h4>
+              <div class="xp-fields-row">
+                <div class="xp-input-box"><span class="xp-label">Total:</span><input type="number" id="field-xp-total" data-bind="xp.total" value="0" min="0"></div>
+                <div class="xp-input-box"><span class="xp-label">Gasto:</span><input type="number" id="field-xp-spent" data-bind="xp.spent" value="0" min="0"></div>
+                <div class="xp-input-box"><span class="xp-label">Disponível:</span><span id="xp-current-display" class="xp-badge-value">0</span></div>
+              </div>
+              <div id="xp-progress" class="xp-progress" role="progressbar" aria-label="Experiência gasta" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                <span class="xp-progress-fill"></span>
+                <span id="xp-progress-text" class="xp-progress-text"></span>
+              </div>
+
+              <div class="xp-auto-box">
+                <button type="button" id="btn-xp-mode" class="xp-mode-switch no-print" data-xp-toggle role="switch" aria-checked="false">
+                  <span class="xp-switch-track" aria-hidden="true"><span class="xp-switch-thumb"></span></span>
+                  <span class="xp-switch-text">Modo Editável XP</span>
+                </button>
+                <div class="xp-auto-row">
+                  <div class="xp-auto-item"><span class="xp-label">XP Total Automático</span><strong id="xp-auto-total">0</strong></div>
+                  <div class="xp-auto-item"><span class="xp-label">XP Gasto Automático</span><strong id="xp-auto-spent">0</strong></div>
+                  <div class="xp-auto-item"><span class="xp-label">Saldo</span><strong id="xp-auto-available">0</strong></div>
+                </div>
+                <p id="xp-auto-diff" class="xp-auto-diff" aria-live="polite"></p>
+                <p id="goals-summary" class="goals-summary" aria-live="polite"></p>
+                <div class="xp-auto-actions no-print">
+                  <button type="button" id="btn-xp-gain" class="btn-tiny" data-lock-exempt>＋ Lançar XP</button>
+                  <button type="button" class="btn-tiny btn-goals" data-goals-open data-lock-exempt>🎯 Objetivos (<span data-goal-count>0</span>)</button>
+                  <button type="button" class="btn-tiny btn-plan-toggle" data-plan-toggle role="switch" aria-checked="false" data-lock-exempt title="Marcar metas tocando nos pontos da ficha">Planejar</button>
+                  <button type="button" id="btn-xp-ledger" class="btn-tiny" data-lock-exempt>Histórico (<span id="xp-ledger-count">0</span>)</button>
+                  <button type="button" id="btn-xp-sync-manual" class="btn-tiny" data-lock-exempt title="Copia o automático para Total e Gasto">Copiar p/ manual</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Relógio da crônica -->
+            <div class="status-card clock-card draggable-card" data-window-id="win-clock">
+              <h4 class="category-heading draggable-handle"><span class="drag-grip">✥</span> RELÓGIO DA CRÔNICA</h4>
+              <div id="clock-card-body" class="clock-body">
+                <p id="clock-date" class="clock-date">🌙 Noite</p>
+                <p class="clock-time-line"><strong id="clock-time" class="clock-time">20:00</strong> <span id="clock-dawn" class="clock-dawn"></span></p>
+                <p id="clock-nights" class="clock-nights"></p>
+              </div>
+              <div class="clock-controls no-print" data-lock-exempt>
+                <button type="button" class="btn-tiny" data-clock-add="10">+10 min</button>
+                <button type="button" class="btn-tiny" data-clock-add="30">+30 min</button>
+                <button type="button" class="btn-tiny" data-clock-add="60">+1 h</button>
+                <span class="clock-custom">
+                  <input type="number" id="clock-custom-minutes" min="1" max="100000" inputmode="numeric" placeholder="min" aria-label="Minutos a avançar">
+                  <button type="button" id="btn-clock-custom" class="btn-tiny">Avançar</button>
+                </span>
+              </div>
+              <div class="clock-controls no-print" data-lock-exempt>
+                <button type="button" class="btn-weapon btn-weapon-attack" data-rest title="Recupera 1 FV, avança a cura de um agravado e leva à próxima noite">🛌 Dormir até a próxima noite</button>
+                <button type="button" id="btn-clock-edit" class="btn-tiny" title="Ajustar data, hora, anoitecer e amanhecer">✎ Ajustar</button>
+              </div>
+              <div id="clock-edit" class="clock-edit no-print" data-lock-exempt hidden>
+                <label>Dia <input type="number" id="clock-edit-day" min="1" max="31" inputmode="numeric"></label>
+                <label>Mês <select id="clock-edit-month"><option value="1">janeiro</option><option value="2">fevereiro</option><option value="3">março</option><option value="4">abril</option><option value="5">maio</option><option value="6">junho</option><option value="7">julho</option><option value="8">agosto</option><option value="9">setembro</option><option value="10">outubro</option><option value="11">novembro</option><option value="12">dezembro</option></select></label>
+                <label>Ano <input type="number" id="clock-edit-year" min="1" max="9999" inputmode="numeric"></label>
+                <label>Hora <input type="time" id="clock-edit-time"></label>
+                <label>Anoitecer <input type="time" id="clock-edit-dusk"></label>
+                <label>Amanhecer <input type="time" id="clock-edit-dawn"></label>
+              </div>
+            </div>
+
+            <!-- Diário de sessões -->
+            <div class="status-card sessions-card draggable-card" data-window-id="win-sessions">
+              <h4 class="category-heading draggable-handle"><span class="drag-grip">✥</span> DIÁRIO DE SESSÕES</h4>
+              <p id="sessions-summary" class="sessions-summary"></p>
+              <div class="session-new no-print">
+                <input type="text" id="session-new-date" placeholder="Data na crônica (ex.: outubro de 1346)" aria-label="Data na crônica" data-lock-exempt>
+                <input type="number" id="session-new-xp" min="0" max="9999" inputmode="numeric" placeholder="XP" aria-label="XP ganho na sessão" data-lock-exempt>
+                <button type="button" id="btn-session-add" class="btn-tiny" data-lock-exempt>＋ Registrar sessão</button>
+              </div>
+              <ul id="sessions-list" class="sessions-list" data-lock-exempt></ul>
+            </div>
+
+            <!-- Ações prolongadas -->
+            <div class="status-card extended-card draggable-card" data-window-id="win-extended">
+              <h4 class="category-heading draggable-handle"><span class="drag-grip">✥</span> AÇÕES PROLONGADAS</h4>
+              <p class="sessions-summary">Somam sucessos de várias rolagens até a meta. Falha crítica zera o progresso.</p>
+              <div class="session-new no-print" data-lock-exempt>
+                <input type="text" id="extended-new-name" placeholder="ex.: Pesquisar ritual" aria-label="Nome da ação prolongada">
+                <input type="number" id="extended-new-goal" min="1" max="999" value="10" inputmode="numeric" aria-label="Meta de sucessos" title="Meta de sucessos">
+                <button type="button" id="btn-extended-add" class="btn-tiny">＋ Criar</button>
+              </div>
+              <ul id="extended-list" class="extended-list" data-lock-exempt></ul>
+            </div>
+
+          </div>
+
+          <!-- COLUNA 2 (MEIO): ANTECEDENTES -> HUMANIDADE -> FORÇA DE VONTADE -> PONTO DE SANGUE -->
+          <div class="vantagens-col">
+            
+            <!-- 1. Antecedentes (0 a 9) -->
+            <div class="trait-category dynamic-category draggable-card" data-window-id="win-backgrounds">
+              <div class="dynamic-category-header draggable-handle">
+                <h4 class="category-heading"><span class="drag-grip">✥</span> ANTECEDENTES</h4>
+                <button type="button" id="btn-add-background" class="btn-add-trait" title="Adicionar Antecedente">＋</button>
+              </div>
+              <div id="backgrounds-list" class="dynamic-trait-list"></div>
+            </div>
+
+            <!-- 2. Humanidade / Trilha -->
+            <div class="status-card humanity-card draggable-card" data-window-id="win-humanity">
+              <div class="path-title-group draggable-handle">
+                <span class="drag-grip">✥</span>
+                <label for="field-path-name">HUMANIDADE / TRILHA:</label>
+                <input type="text" id="field-path-name" data-bind="status.path_name" placeholder="Humanidade">
+              </div>
+              <div class="dots-track-box">
+                <div class="dots-group dots-10" id="humanity-dots" data-trait="status.humanity" data-min="0" data-max="10" data-val="7"></div>
+              </div>
+            </div>
+
+            <!-- 3. Força de Vontade -->
+            <div class="status-card willpower-card draggable-card" data-window-id="win-willpower">
+              <div class="status-card-header draggable-handle">
+                <h4 class="category-heading"><span class="drag-grip">✥</span> FORÇA DE VONTADE</h4>
+                <span class="willpower-available" id="willpower-available">Disponível: 0</span>
+              </div>
+              <div class="willpower-subline trait-row" data-trait="status.willpower_perm" data-label="Força de Vontade">
+                <div class="willpower-label-group">
+                  <button type="button" class="trait-link-node" title="Conectar Força de Vontade para rolagem"></button>
+                  <span class="subline-label">Permanente:</span>
+                </div>
+                <div class="dots-group dots-10" id="willpower-perm-dots" data-trait="status.willpower_perm" data-min="0" data-max="10" data-val="5"></div>
+              </div>
+              <div class="willpower-subline">
+                <div class="willpower-label-group">
+                  <span class="willpower-spacer"></span>
+                  <span class="subline-label">Temporária:</span>
+                </div>
+                <div class="boxes-group boxes-10" id="willpower-temp-boxes"></div>
+              </div>
+            </div>
+
+            <!-- 4. Ponto de Sangue -->
+            <div class="status-card blood-card draggable-card" data-window-id="win-blood">
+              <div class="status-card-header draggable-handle">
+                <h4 class="category-heading"><span class="drag-grip">✥</span> PONTO DE SANGUE</h4>
+                <span class="blood-counter" id="blood-count-display">10 / 10</span>
+              </div>
+              <div class="generation-rules-badge" id="generation-rules-info">
+                <span>Geração: <strong>13ª</strong></span> • 
+                <span>Max: <strong>10 pts</strong></span> • 
+                <span>Gasto/Turno: <strong>1 pt</strong></span>
+              </div>
+              <div class="blood-gen-stepper no-print" role="group" aria-label="Mudar Geração">
+                <button type="button" class="btn-tiny btn-gen-wide" data-gen-step="-1">▲ Subir Geração</button>
+                <span class="blood-gen-current"><span data-gen-current>13ª</span> Geração</span>
+                <button type="button" class="btn-tiny btn-gen-wide" data-gen-step="1">▼ Descer Geração</button>
+              </div>
+              <div class="blood-liquid-meter" id="blood-liquid-meter" role="slider" tabindex="0" aria-label="Reserva de sangue (arraste para ajustar)" title="Arraste para ajustar a reserva" aria-valuemin="0" aria-valuenow="0" aria-valuemax="10">
+                <div class="blood-liquid-fill" id="blood-liquid-fill"></div>
+              </div>
+              <div class="blood-pool-grid" id="blood-pool-grid"></div>
+              <div class="blood-adjust no-print" role="group" aria-label="Adicionar ou retirar sangue">
+                <button type="button" id="btn-blood-adjust-remove" class="btn-tiny blood-adjust-btn" title="Retirar essa quantidade">− Retirar</button>
+                <input type="number" id="blood-adjust-amount" value="1" min="1" max="200" inputmode="numeric" aria-label="Quantidade de pontos de sangue">
+                <button type="button" id="btn-blood-adjust-add" class="btn-tiny blood-adjust-btn" title="Adicionar essa quantidade">＋ Adicionar</button>
+              </div>
+              <p class="blood-hunger-warning hidden" id="blood-hunger-warning" role="status"></p>
+              <div class="blood-controls no-print">
+                <button type="button" id="btn-blood-fill-all" class="btn-tiny">Encher Tudo</button>
+                <button type="button" id="btn-blood-clear-all" class="btn-tiny btn-tiny-danger">Esvaziar (0)</button>
+              </div>
+              <div class="blood-actions no-print">
+                <div class="blood-actions-row">
+                  <button type="button" id="btn-blood-heal" class="btn-blood-action" title="1 ponto cura 1 nível contusivo ou letal. Agravado: 5 pontos e 1 dia de descanso.">🩺 Curar 1 nível</button>
+                  <div class="blood-boost-group">
+                    <select id="blood-boost-attr" class="blood-boost-select" aria-label="Atributo físico a aumentar">
+                      <option value="strength">Força</option>
+                      <option value="dexterity">Destreza</option>
+                      <option value="stamina">Vigor</option>
+                    </select>
+                    <button type="button" id="btn-blood-boost" class="btn-blood-action" title="Gasta 1 ponto: +1 no atributo até o fim da cena">💪 +1</button>
+                  </div>
+                </div>
+                <div class="blood-actions-row blood-turn-row">
+                  <span class="blood-turn-info" id="blood-turn-info">Gasto neste turno: 0 de 1</span>
+                  <button type="button" class="btn-tiny" data-rest title="Recupera 1 FV, avança a cura de agravados e leva à próxima noite">🛌 Dormir</button>
+                  <button type="button" id="btn-blood-wake" class="btn-tiny" title="Gasta 1 ponto de sangue ao acordar e renova turno e cena">🌙 Despertar</button>
+                  <button type="button" id="btn-blood-new-turn" class="btn-tiny">Novo turno</button>
+                  <button type="button" id="btn-blood-end-scene" class="btn-tiny">Fim da cena</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- COLUNA 3 (DIREITA): VIRTUDES -> VITALIDADE -> FRAQUEZA -->
+          <div class="vantagens-col">
+            
+            <!-- 1. Virtudes (1 a 5) -->
+            <div class="trait-category draggable-card" data-window-id="win-virtues">
+              <h4 class="category-heading draggable-handle"><span class="drag-grip">✥</span> VIRTUDES</h4>
+              <div class="trait-list">
+                <div class="trait-row" data-trait="virtues.conscience" data-label="Consciência / Convicção">
+                  <button type="button" class="trait-link-node" title="Conectar Virtude"></button>
+                  <span class="trait-name">Consciência / Convicção</span>
+                  <div class="dots-group" data-min="1" data-max="5" data-val="1"></div>
+                </div>
+                <div class="trait-row" data-trait="virtues.self_control" data-label="Autocontrole / Instinto">
+                  <button type="button" class="trait-link-node" title="Conectar Virtude"></button>
+                  <span class="trait-name">Autocontrole / Instinto</span>
+                  <div class="dots-group" data-min="1" data-max="5" data-val="1"></div>
+                </div>
+                <div class="trait-row" data-trait="virtues.courage" data-label="Coragem">
+                  <button type="button" class="trait-link-node" title="Conectar Virtude"></button>
+                  <span class="trait-name">Coragem</span>
+                  <div class="dots-group" data-min="1" data-max="5" data-val="1"></div>
+                </div>
+              </div>
+              <div class="derived-stats-box">
+                <label class="derived-toggle">
+                  <input type="checkbox" id="toggle-auto-derived">
+                  <span>Calcular Força de Vontade e Humanidade pelas Virtudes</span>
+                </label>
+                <p class="derived-hint" id="derived-stats-hint"></p>
+              </div>
+              <div class="virtue-rolls no-print" role="group" aria-label="Testes de Virtude">
+                <button type="button" class="btn-tiny btn-quick-virtue is-frenzy" data-virtue-roll="frenzy" data-lock-exempt title="Autocontrole/Instinto contra o Frenesi — com clarão e som">🐺 Frenesi</button>
+                <button type="button" class="btn-tiny btn-quick-virtue is-fear" data-virtue-roll="rotschreck" data-lock-exempt title="Coragem contra o Rötschreck — com clarão e som">🔥 Rötschreck</button>
+              </div>
+            </div>
+
+            <!-- 2. Vitalidade -->
+            <div class="status-card health-card draggable-card" data-window-id="win-health">
+              <div class="status-card-header draggable-handle">
+                <h4 class="category-heading"><span class="drag-grip">✥</span> VITALIDADE</h4>
+                <div class="health-cycle-badge" title="Clique no quadradinho para avançar o dano">
+                  Ciclo: [ ] ➔ [/] ➔ [X] ➔ [*]
+                </div>
+              </div>
+              <p class="wound-penalty-badge" id="wound-penalty-badge" role="status">Ileso: sem penalidade</p>
+              <div class="health-track-list" id="health-track-list"></div>
+              <div id="agg-healing" class="agg-healing" data-lock-exempt hidden>
+                <p class="agg-title">✶ Cura de agravados <small>(5 PS + 1 dia de descanso cada)</small></p>
+                <p id="agg-healing-summary" class="agg-summary"></p>
+                <ul id="agg-healing-list" class="agg-list"></ul>
+                <button type="button" class="btn-tiny no-print" data-rest>🛌 Dormir (cura 1 nível e +1 FV)</button>
+              </div>
+              <div class="health-controls no-print">
+                <button type="button" id="btn-health-clear-all" class="btn-tiny">Curar Todos</button>
+              </div>
+            </div>
+
+            <!-- 3. Fraqueza -->
+            <div class="status-card weakness-card draggable-card" data-window-id="win-weakness">
+              <h4 class="category-heading draggable-handle"><span class="drag-grip">✥</span> FRAQUEZA</h4>
+              <textarea id="field-weakness" data-bind="notes.weakness" class="weakness-textarea" rows="3" placeholder="Fraqueza do Clã ou pessoal..."></textarea>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      <!-- 5. ARSENAL & COMBATE -->
+      <section class="sheet-section section-combat" data-lock-section="combat">
+        <div class="section-banner"><h3>ARSENAL &amp; COMBATE</h3><button type="button" class="btn-section-lock no-print" data-lock-toggle="combat" aria-pressed="false" title="Travar Arsenal &amp; Combate">🔓</button></div>
+        <div class="combat-grid">
+          <div class="trait-category dynamic-category draggable-card combat-card" data-window-id="win-weapons">
+            <div class="dynamic-category-header draggable-handle">
+              <h4 class="category-heading"><span class="drag-grip">✥</span> ARMAS & ATAQUES</h4>
+              <div class="header-badge-group">
+                <button type="button" id="btn-weapons-collapse-all" class="btn-collapse-all" data-lock-exempt title="Minimizar todas as armas">▾</button>
+                <button type="button" id="btn-add-weapon" class="btn-add-trait" title="Adicionar arma" aria-label="Adicionar arma">＋</button>
+              </div>
+            </div>
+            <p class="section-hint-text">Ataque = Atributo + Habilidade contra a dificuldade da arma. Sucessos além do primeiro viram dados extras de dano. Potência soma dados a tudo com Força; Celeridade, a tudo com Destreza.</p>
+            <div id="celerity-box" class="celerity-box no-print" hidden>
+              <div class="celerity-head">
+                <span class="celerity-title">⚡ Celeridade <strong id="celerity-level">0</strong></span>
+                <div id="celerity-pips" class="celerity-pips" aria-hidden="true"></div>
+              </div>
+              <p id="celerity-status" class="blood-power-hint" aria-live="polite"></p>
+              <div class="celerity-actions">
+                <button type="button" id="btn-celerity-action" class="btn-weapon btn-weapon-attack" data-lock-exempt>⚡ Ação extra (−1 PS)</button>
+                <button type="button" id="btn-celerity-new-turn" class="btn-tiny" data-lock-exempt title="Renova ações de Celeridade e o limite de sangue">Novo turno</button>
+              </div>
+            </div>
+            <div id="potence-box" class="blood-power-box no-print" hidden>
+              <label id="potence-blood-label">🩸 Potência neste turno</label>
+              <button type="button" id="btn-potence-blood" class="btn-discipline-blood" aria-pressed="false" data-lock-exempt aria-labelledby="potence-blood-label">🩸 Ativar Potência (1 PS)</button>
+              <p id="potence-blood-hint" class="blood-power-hint"></p>
+            </div>
+            <div id="weapons-list" class="weapons-list"></div>
+          </div>
+
+          <div class="status-card soak-card draggable-card" data-window-id="win-soak">
+            <h4 class="category-heading draggable-handle"><span class="drag-grip">✥</span> ABSORÇÃO & INICIATIVA</h4>
+            <p class="soak-info" id="soak-info"></p>
+            <div id="soak-blood-box" class="blood-power-box no-print" hidden>
+              <label id="soak-blood-label">🩸 Fortitude neste turno</label>
+              <button type="button" id="btn-fortitude-blood" class="btn-discipline-blood" aria-pressed="false" data-lock-exempt aria-labelledby="soak-blood-label">🩸 Ativar Fortitude (1 PS)</button>
+              <p id="soak-blood-hint" class="blood-power-hint"></p>
+            </div>
+            <div class="damage-assistant no-print">
+              <p class="damage-assistant-title">Dano recebido</p>
+              <div class="damage-assistant-row">
+                <label for="incoming-damage" class="visually-hidden">Sucessos de dano do inimigo</label>
+                <input type="number" id="incoming-damage" min="0" max="50" inputmode="numeric" placeholder="Dano" data-lock-exempt title="Sucessos que o inimigo tirou na rolagem de dano">
+                <select id="soak-type" class="blood-boost-select" aria-label="Tipo de dano recebido" data-lock-exempt>
+                  <option value="bashing">/ Contusivo</option>
+                  <option value="lethal" selected>✕ Letal</option>
+                  <option value="aggravated">✶ Agravado</option>
+                </select>
+              </div>
+              <div class="damage-assistant-row">
+                <button type="button" id="btn-soak-apply" class="btn-weapon btn-weapon-attack" data-lock-exempt>🛡️ Absorver e aplicar</button>
+                <button type="button" id="btn-soak-roll" class="btn-tiny" data-lock-exempt title="Só rola a absorção, sem marcar dano">Só rolar</button>
+              </div>
+              <p id="damage-result" class="damage-result" aria-live="polite"></p>
+              <div id="damage-heal" class="damage-heal no-print" data-lock-exempt hidden>
+                <p id="damage-heal-text" class="damage-heal-text"></p>
+                <div class="damage-heal-actions">
+                  <button type="button" id="btn-damage-heal-one" class="btn-tiny">🩸 Curar 1 nível (1 PS)</button>
+                  <button type="button" id="btn-damage-heal-all" class="btn-tiny">🩸 Curar tudo</button>
+                  <button type="button" id="btn-damage-heal-skip" class="btn-tiny">Deixar assim</button>
+                </div>
+              </div>
+            </div>
+            <p class="section-hint-text soak-rule">Dificuldade 6. O que sobra depois da absorção vira ferimento; dano contusivo cai pela metade para vampiros (arredonde para baixo). Agravado só é absorvido com Fortitude.</p>
+            <div class="initiative-box">
+              <div class="initiative-head">
+                <button type="button" id="btn-initiative" class="btn-weapon btn-weapon-attack no-print" data-lock-exempt>⚡ Rolar iniciativa</button>
+                <button type="button" id="btn-initiative-config" class="btn-tiny no-print" aria-expanded="false" aria-controls="initiative-config" data-lock-exempt title="Escolher dados, traços e bônus da iniciativa">⚙️ Ajustar</button>
+              </div>
+              <p class="initiative-formula-line">Fórmula: <span id="initiative-formula">1d10 + Destreza + Raciocínio − ferimentos</span></p>
+              <p id="initiative-result" class="initiative-result" aria-live="polite"></p>
+              <div id="initiative-config" class="initiative-config no-print" hidden>
+                <div class="init-row">
+                  <label for="initiative-dice">Dados d10</label>
+                  <input type="number" id="initiative-dice" min="0" max="10" inputmode="numeric" data-lock-exempt>
+                  <label for="initiative-bonus">Bônus fixo</label>
+                  <input type="number" id="initiative-bonus" min="-20" max="50" inputmode="numeric" data-lock-exempt>
+                </div>
+                <div class="init-row init-traits-row">
+                  <span class="init-label">Traços somados</span>
+                  <div id="initiative-traits" class="init-traits"></div>
+                </div>
+                <div class="init-row">
+                  <select id="initiative-add-trait" aria-label="Somar outro traço à iniciativa" data-lock-exempt></select>
+                  <label class="xp-option"><input type="checkbox" id="initiative-wounds" data-lock-exempt> Subtrair ferimentos</label>
+                </div>
+                <button type="button" id="btn-initiative-reset" class="btn-tiny" data-lock-exempt>Restaurar padrão V20</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="sheet-footer">
+        <div class="footer-divider"></div>
+        <p>Vampiro: A Máscara © White Wolf Publishing — Página 1: Traços & Status · Ficha <span data-app-version>v2.1</span></p>
+      </footer>
+
+    </main>
+
+    <!-- ====================================================================
+         PÁGINA 2: QUALIDADES & DEFEITOS, OUTRAS CARACTERÍSTICAS, RITUAIS E CAMINHOS
+         ==================================================================== -->
+    <main class="sheet-card page-container" id="page-2">
+      
+      <div class="gothic-header-ornament">
+        <div class="ornament-line"></div>
+        <div class="ornament-center">
+          <span class="gothic-ankh">☥</span>
+          <h2>VAMPIRE: THE MASQUERADE</h2>
+          <span class="sheet-subtitle">PÁGINA 2: QUALIDADES, CAMINHOS & RITUAIS • ARRASTE AS JANELAS ✥</span>
+        </div>
+        <div class="ornament-line"></div>
+      </div>
+
+      <!-- SEÇÃO 1 DA PÁG 2: CAMINHOS & RITUAIS -->
+      <section class="sheet-section page2-magic-section" data-lock-section="grimoire">
+        <div class="section-banner"><h3>CAMINHOS &amp; RITUAIS TAUMATÚRGICOS / NECROMÂNTICOS</h3><button type="button" class="btn-section-lock no-print" data-lock-toggle="grimoire" aria-pressed="false" title="Travar Caminhos &amp; Rituais">🔓</button></div>
+        <div class="two-col-grid">
+          
+          <!-- Caminhos (0 a 9) -->
+          <div class="trait-category dynamic-category draggable-card" data-window-id="win-paths">
+            <div class="dynamic-category-header draggable-handle">
+              <h4 class="category-heading"><span class="drag-grip">✥</span> CAMINHOS (0 A 9)</h4>
+              <button type="button" id="btn-add-path" class="btn-add-trait" title="Adicionar Caminho/Trilha">＋</button>
+            </div>
+            <p class="section-hint-text" id="paths-hint">Ex: Trilha do Sangue, Senda das Cinzas...</p>
+            <div id="paths-list" class="dynamic-trait-list"></div>
+          </div>
+
+          <!-- Grimório: abas separadas para Rituais e Feitiços -->
+          <div class="trait-category dynamic-category draggable-card grimoire-card" data-window-id="win-rituals">
+            <div class="dynamic-category-header draggable-handle">
+              <h4 class="category-heading"><span class="drag-grip">✥</span> GRIMÓRIO</h4>
+              <div class="header-badge-group">
+                <a href="https://saynoise.github.io/Vampiro-Navegador/compendios/grimorio-rituais.html" target="_blank" rel="noopener noreferrer" class="card-badge-link no-print" data-grimoire-only="ritual" title="Abrir Grimório Oficial de Rituais V20"><span>📜 Grimório Oficial</span> ↗</a>
+                <button type="button" id="btn-add-ritual" class="btn-add-trait" title="Criar ritual" aria-label="Criar ritual">＋</button>
+              </div>
+            </div>
+
+            <div class="grimoire-tabbar no-print">
+            <div class="grimoire-tabs" role="tablist" aria-label="Seções do grimório">
+              <button type="button" role="tab" id="grimoire-tab-ritual" class="grimoire-tab" data-grimoire-tab="ritual" aria-controls="grimoire-panel-ritual" aria-selected="true">
+                <span aria-hidden="true">📜</span> Rituais <span class="grimoire-tab-count" data-grimoire-count="ritual">0</span>
+              </button>
+              <button type="button" role="tab" id="grimoire-tab-spell" class="grimoire-tab" data-grimoire-tab="spell" aria-controls="grimoire-panel-spell" aria-selected="false" tabindex="-1">
+                <span aria-hidden="true">🔮</span> Feitiços <span class="grimoire-tab-count" data-grimoire-count="spell">0</span>
+              </button>
+              <button type="button" role="tab" id="grimoire-tab-power" class="grimoire-tab" data-grimoire-tab="power" aria-controls="grimoire-panel-power" aria-selected="false" tabindex="-1">
+                <span aria-hidden="true">✴️</span> Poderes <span class="grimoire-tab-count" data-grimoire-count="power">0</span>
+              </button>
+            </div>
+            <button type="button" id="btn-grimoire-collapse-all" class="btn-collapse-all grimoire-collapse-all" data-lock-exempt>▾ Minimizar todos</button>
+            </div>
+
+            <div id="grimoire-panel-ritual" class="grimoire-panel" role="tabpanel" aria-labelledby="grimoire-tab-ritual" data-grimoire-panel="ritual">
+              <h5 class="grimoire-print-title">📜 Rituais</h5>
+              <p class="section-hint-text">Rituais taumatúrgicos e necromânticos. Padrão V20: Inteligência + Ocultismo, dificuldade nível + 3 (máx. 9).</p>
+              <div id="rituals-list" class="dynamic-rituals-list"></div>
+            </div>
+
+            <div id="grimoire-panel-spell" class="grimoire-panel" role="tabpanel" aria-labelledby="grimoire-tab-spell" data-grimoire-panel="spell" hidden>
+              <h5 class="grimoire-print-title">🔮 Feitiços</h5>
+              <p class="section-hint-text">Poderes de Trilha e feitiços próprios. Padrão V20: Força de Vontade, dificuldade nível + 3, custo de 1 ponto de sangue.</p>
+              <div id="spells-list" class="dynamic-rituals-list"></div>
+            </div>
+
+            <div id="grimoire-panel-power" class="grimoire-panel" role="tabpanel" aria-labelledby="grimoire-tab-power" data-grimoire-panel="power" hidden>
+              <h5 class="grimoire-print-title">✴️ Poderes de Disciplina</h5>
+              <p class="section-hint-text">Poderes das suas Disciplinas (Auspícios, Dominação, Presença…). Escolha a Disciplina, o nível e a parada do poder; a dificuldade começa fixa em 6.</p>
+              <div id="powers-list" class="dynamic-rituals-list"></div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- SEÇÃO 2 DA PÁG 2: QUALIDADES, DEFEITOS & HISTÓRICO -->
+      <section class="sheet-section page2-notes-section" data-lock-section="notes">
+        <div class="section-banner"><h3>QUALIDADES, DEFEITOS &amp; CARACTERÍSTICAS EXPANDIDAS</h3><button type="button" class="btn-section-lock no-print" data-lock-toggle="notes" aria-pressed="false" title="Travar Qualidades &amp; Características">🔓</button></div>
+        
+        <div class="two-col-grid">
+          
+          <!-- Qualidades & Defeitos -->
+          <div class="text-card draggable-card mf-card" data-window-id="win-merits-flaws">
+            <div class="card-header-with-badge draggable-handle">
+              <label><span class="drag-grip">✥</span> Qualidades & Defeitos:</label>
+              <div class="header-badge-group">
+                <button type="button" class="card-badge-link" data-open-merits-catalog title="Abrir o catálogo com busca e filtros">
+                  <span>🔎 Catálogo</span>
+                </button>
+                <a href="https://saynoise.github.io/Vampiro-Navegador/compendios/qualidades-defeitos.html" target="_blank" rel="noopener noreferrer" class="card-badge-link no-print" title="Abrir Compêndio Completo de Qualidades &amp; Defeitos">
+                  <span>📖 Lista Completa</span> ↗
+                </a>
+              </div>
+            </div>
+            <div class="mf-totals" id="merits-flaws-totals" aria-live="polite"></div>
+            <div class="mf-list" id="merits-flaws-list"></div>
+            <div class="mf-custom-actions no-print">
+              <button type="button" id="btn-add-custom-merit" class="btn-tiny">+ Qualidade própria</button>
+              <button type="button" id="btn-add-custom-flaw" class="btn-tiny">+ Defeito próprio</button>
+            </div>
+            <label for="field-merits-flaws" class="mf-notes-label">Observações</label>
+            <textarea id="field-merits-flaws" data-bind="notes.merits_flaws" rows="3" placeholder="Detalhes combinados com o Narrador..."></textarea>
+          </div>
+
+          <!-- Outras Características -->
+          <div class="text-card draggable-card" data-window-id="win-other-traits">
+            <div class="card-header-with-badge draggable-handle">
+              <label for="field-other-traits"><span class="drag-grip">✥</span> Outras Características & Posses:</label>
+              <span class="card-badge-info">Refúgio, Idiomas, Armas</span>
+            </div>
+            <textarea id="field-other-traits" data-bind="notes.other_traits" rows="7" placeholder="Refúgio principal, veículos, idiomas, armas..."></textarea>
+          </div>
+
+          <!-- Refúgio -->
+          <div class="text-card draggable-card" data-window-id="win-haven">
+            <div class="draggable-handle">
+              <label for="field-haven"><span class="drag-grip">✥</span> Refúgio:</label>
+            </div>
+            <textarea id="field-haven" data-bind="notes.haven" rows="4" placeholder="Localização, segurança, entradas secretas, quem sabe onde fica..."></textarea>
+          </div>
+
+          <!-- Objetivos -->
+          <div class="text-card draggable-card" data-window-id="win-goals">
+            <div class="draggable-handle">
+              <label for="field-goals"><span class="drag-grip">✥</span> Objetivos:</label>
+            </div>
+            <textarea id="field-goals" data-bind="notes.goals" rows="4" placeholder="Curto prazo, longo prazo, ambições na Jyhad..."></textarea>
+          </div>
+
+          <!-- Posses & Frota -->
+          <div class="text-card draggable-card" data-window-id="win-possessions">
+            <div class="draggable-handle">
+              <label for="field-possessions"><span class="drag-grip">✥</span> Posses & Frota:</label>
+            </div>
+            <textarea id="field-possessions" data-bind="notes.possessions" rows="4" placeholder="Veículos, imóveis, equipamentos, relíquias..."></textarea>
+          </div>
+
+          <!-- Histórico Completo -->
+          <div class="text-card draggable-card" data-window-id="win-history">
+            <div class="draggable-handle">
+              <label for="field-history"><span class="drag-grip">✥</span> Histórico:</label>
+            </div>
+            <textarea id="field-history" data-bind="notes.history" rows="4" placeholder="Origem do personagem, eventos da não-vida, dívidas de sangue..."></textarea>
+          </div>
+
+          <!-- Anotações livres em Markdown -->
+          <div class="text-card span-two-cols draggable-card markdown-card" data-window-id="win-markdown">
+            <div class="card-header-with-badge draggable-handle">
+              <label for="field-markdown"><span class="drag-grip">✥</span> Diário & Anotações:</label>
+              <div class="header-badge-group">
+                <span class="card-badge-info">Aceita Markdown: # título, **negrito**, *itálico*, - lista, - [ ] tarefa</span>
+                <button type="button" id="btn-toggle-markdown" class="card-badge-link" aria-pressed="false">Visualizar</button>
+              </div>
+            </div>
+            <textarea id="field-markdown" data-bind="notes.markdown" rows="8" placeholder="# Sessão 12&#10;- Encontro com o Príncipe no Elysium&#10;- [ ] Descobrir quem vendeu o refúgio"></textarea>
+            <div id="markdown-preview" class="markdown-preview hidden"></div>
+          </div>
+
+        </div>
+      </section>
+
+      <footer class="sheet-footer">
+        <div class="footer-divider"></div>
+        <p>Vampiro: A Máscara © White Wolf Publishing — Página 2: Grimório & Características · Ficha <span data-app-version>v2.1</span></p>
+      </footer>
+
+    </main>
+
+  </div>
+
+  <!-- DOCK FLUTUANTE DE LINK CABLE & ROLAGEM DE DADOS -->
+  <div id="dice-roller-dock" class="dice-roller-dock hidden no-print" role="region" aria-label="Rolador de dados">
+    <div class="dock-container">
+
+      <div class="dock-header">
+        <div class="dock-title-group">
+          <span class="dock-blood-icon" aria-hidden="true">🩸</span>
+          <div class="dock-title-text">
+            <h4 id="dock-title">Parada de dados</h4>
+            <p id="dock-preset-note" class="dock-preset-note" hidden></p>
+          </div>
+        </div>
+        <div class="dock-badges-list" id="dock-selected-traits-list"></div>
+        <button type="button" id="btn-clear-links" class="btn-clear-web" title="Fechar o rolador e desconectar os cabos">✕ Fechar</button>
+      </div>
+
+      <div class="dock-body">
+        <div class="dock-pool-summary">
+          <span class="pool-math-display" id="dock-pool-math">0 Dados</span>
+          <span class="pool-total-badge" id="dock-pool-total" aria-label="Total de dados">0</span>
+        </div>
+
+        <div class="dock-control-item dock-modifier-group">
+          <label for="dock-modifier">Mod.</label>
+          <button type="button" id="btn-mod-minus" class="dock-step-btn" aria-label="Remover um dado">−</button>
+          <input type="number" id="dock-modifier" class="dock-modifier-input" value="0" min="-20" max="30" step="1">
+          <button type="button" id="btn-mod-plus" class="dock-step-btn" aria-label="Adicionar um dado">+</button>
+        </div>
+
+        <div class="dock-control-item">
+          <label for="dock-difficulty">Dificuldade:</label>
+          <select id="dock-difficulty" class="dock-diff-select">
+            <option value="2">Dif 2 (Muito Fácil)</option>
+            <option value="3">Dif 3 (Fácil)</option>
+            <option value="4">Dif 4 (Rotineiro)</option>
+            <option value="5">Dif 5 (Simples)</option>
+            <option value="6" selected>Dif 6 (Padrão V20)</option>
+            <option value="7">Dif 7 (Desafiador)</option>
+            <option value="8">Dif 8 (Difícil)</option>
+            <option value="9">Dif 9 (Extremo)</option>
+            <option value="10">Dif 10 (Quase Impossível)</option>
+          </select>
+        </div>
+
+        <div class="dock-control-item">
+          <label for="dock-guaranteed">⭐ Garantidos:</label>
+          <select id="dock-guaranteed" class="dock-diff-select dock-guaranteed-select" title="Sucessos automáticos que não são cancelados por '1' (ex.: Potência)">
+            <option value="0" selected>0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option>
+          </select>
+        </div>
+
+        <div class="dock-extended-row">
+          <label for="dock-extended">⏳</label>
+          <select id="dock-extended" class="dock-diff-select dock-extended-select" title="Somar os sucessos desta rolagem numa ação prolongada"></select>
+        </div>
+
+        <div class="dock-odds" aria-live="polite">
+          <span class="dock-odds-label">Chance de</span>
+          <label for="dock-required" class="visually-hidden">Sucessos necessários</label>
+          <select id="dock-required" class="dock-diff-select dock-required-select" title="Quantos sucessos a ação precisa">
+            <option value="1">≥ 1 sucesso</option><option value="2">≥ 2 sucessos</option><option value="3">≥ 3 sucessos</option>
+            <option value="4">≥ 4 sucessos</option><option value="5">≥ 5 sucessos</option><option value="6">≥ 6 sucessos</option>
+            <option value="7">≥ 7 sucessos</option><option value="8">≥ 8 sucessos</option><option value="9">≥ 9 sucessos</option>
+            <option value="10">≥ 10 sucessos</option>
+          </select>
+          <strong id="dock-odds-value" class="dock-odds-value">—</strong>
+          <span id="dock-odds-botch" class="dock-odds-botch"></span>
+        </div>
+
+        <div class="dock-chips" role="group" aria-label="Opções da rolagem">
+          <button type="button" id="toggle-specialty" class="dock-chip" aria-pressed="false" title="Cada 10 vale 2 sucessos (padrão). Clique para contar o 10 como 1 sucesso"><span class="chip-dot" aria-hidden="true"></span><span class="chip-text">10 = 2 sucessos</span></button>
+          <button type="button" id="toggle-auto-success" class="dock-chip chip-willpower" aria-pressed="false" title="Declare antes de rolar: gasta 1 FV e garante 1 sucesso que não é cancelado por 1"><span class="chip-dot" aria-hidden="true"></span><span class="chip-text">FV: +1 sucesso</span></button>
+          <button type="button" id="toggle-physical-disciplines" class="dock-chip chip-disciplines" aria-pressed="true" hidden title="Potência soma dados a rolagens de Força; Celeridade, às de Destreza"><span class="chip-dot" aria-hidden="true"></span><span class="chip-text">⚡ Disciplinas físicas</span></button>
+          <button type="button" id="toggle-wounds" class="dock-chip chip-wounds" aria-pressed="true" title="Subtrai a penalidade do nível de Vitalidade atual"><span class="chip-dot" aria-hidden="true"></span><span class="chip-text">Ferimentos: 0</span></button>
+        </div>
+
+        <div class="dock-command-box">
+          <label for="dock-command-format" class="visually-hidden">Formato do comando</label>
+          <select id="dock-command-format" class="dock-diff-select dock-format-select" title="Formato do comando para bots e mesas virtuais">
+            <option value="vr">Bot (!vr)</option>
+            <option value="dicemaiden">Dice Maiden</option>
+            <option value="roll20">Roll20</option>
+            <option value="foundry">Foundry VTT</option>
+          </select>
+          <div class="command-input-group">
+            <input type="text" id="dock-command-input" class="command-input" value="!vr 0" readonly aria-label="Comando de rolagem">
+            <button type="button" id="btn-copy-command" class="btn-copy-cmd" title="Copiar comando de rolagem">
+              <span class="copy-icon" aria-hidden="true">📋</span> Copiar
+            </button>
+          </div>
+        </div>
+
+        <div class="dock-action-item">
+          <button type="button" id="btn-roll-dice" class="btn-dock-roll">
+            <span class="dice-icon" aria-hidden="true">🎲</span> Rolar Dados
+          </button>
+        </div>
+      </div>
+
+      <div id="dock-dice-results" class="dock-dice-results hidden" aria-live="polite">
+        <div id="fx-success-meter" class="fx-success-meter" aria-hidden="true" hidden><span class="fx-success-fill"></span></div>
+        <div class="results-header">
+          <span id="dice-outcome-badge" class="outcome-badge">0 Sucessos</span>
+          <span id="dice-summary-text" class="summary-text"></span>
+          <span id="dice-reroll-badge" class="result-flag result-flag-reroll" hidden>🔥 Rerolado com Força de Vontade</span>
+          <span id="dice-spell-badge" class="result-flag result-flag-spell" hidden></span>
+          <div class="results-actions">
+            <button type="button" id="btn-wp-auto-after" class="btn-reroll-dock btn-wp-auto hidden">
+              <span class="btn-icon" aria-hidden="true">🔥</span> +1 sucesso (−1 FV)
+            </button>
+            <button type="button" id="btn-reroll-failures" class="btn-reroll-dock hidden">
+              <span class="btn-icon" aria-hidden="true">🔄</span> Re-rolar falhas
+            </button>
+          </div>
+        </div>
+        <div id="dice-rendered-list" class="dice-rendered-list"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- BOTÃO FLUTUANTE DE HISTÓRICO DE ROLAGENS (LADO DIREITO) -->
+  <button type="button" id="btn-open-dice-history" class="floating-history-btn no-print" title="Histórico de Rolagens (Crônica)">
+    <span class="history-symbol">𝕮</span>
+    <span class="history-btn-badge" id="history-roll-count" data-history-count>0</span>
+  </button>
+
+  <!-- BOTÃO FLUTUANTE DE AJUDA & WIKI V20 (LADO ESQUERDO) -->
+  <button type="button" id="btn-open-wiki-help" class="floating-wiki-btn no-print" title="Compêndio & Wiki V20 (Guia Rápido)">
+    <span class="wiki-symbol">𝖂</span>
+    <span class="wiki-btn-badge">Wiki</span>
+  </button>
+
+  <!-- DRAWER LATERAL DE AJUDA & WIKI V20 (LADO ESQUERDO) -->
+  <div id="wiki-help-drawer" class="wiki-drawer-overlay hidden no-print">
+    <div class="wiki-drawer-panel">
+      <div class="wiki-drawer-header">
+        <div class="drawer-title-group">
+          <span class="drawer-symbol">𝖂</span>
+          <div>
+            <h3>COMPÊNDIO & WIKI V20</h3>
+            <span class="wiki-drawer-subtitle">Guia de Regras, Lore & Links Rápidos</span>
+          </div>
+        </div>
+        <button type="button" id="btn-close-wiki-help" class="btn-modal-close" title="Fechar">✕</button>
+      </div>
+
+      <div class="wiki-drawer-search">
+        <input type="text" id="wiki-search-input" class="wiki-search-field" placeholder="🔍 Pesquisar disciplinas, clãs, regras..." aria-label="Pesquisar na Wiki">
+      </div>
+
+      <div class="wiki-drawer-body" id="wiki-topics-list">
+        
+        <!-- SEÇÃO: LINKS OFICIAIS & ENCYCLOPÉDIA -->
+        <div class="wiki-section" data-search-text="wiki oficial white wolf enciclopedia lore regras">
+          <h4 class="wiki-section-title">🌐 Wikis & Enciclopédias Oficiais</h4>
+          
+          <a href="https://whitewolf.fandom.com/wiki/Vampire:_The_Masquerade_20th_Anniversary_Edition" target="_blank" rel="noopener noreferrer" class="wiki-link-card" data-search-text="v20 anniversary edition white wolf livro regras">
+            <div class="wiki-link-icon">📖</div>
+            <div class="wiki-link-info">
+              <span class="wiki-link-title">White Wolf Wiki (V20 Hub) ↗</span>
+              <span class="wiki-link-desc">Enciclopédia principal da Edição de 20º Aniversário, suplementos e lore oficial.</span>
+            </div>
+          </a>
+
+          <a href="https://whitewolf.fandom.com/wiki/Discipline_(VTM)" target="_blank" rel="noopener noreferrer" class="wiki-link-card" data-search-text="disciplinas poderes celeridade potencia fortitude dominação ofuscação taumaturgia presença auspex animalismo">
+            <div class="wiki-link-icon">🩸</div>
+            <div class="wiki-link-info">
+              <span class="wiki-link-title">Índice Geral de Disciplinas (1 a 10) ↗</span>
+              <span class="wiki-link-desc">Catálogo detalhado de todos os níveis de poderes, custos de sangue e testes.</span>
+            </div>
+          </a>
+
+          <a href="https://whitewolf.fandom.com/wiki/Clan_(VTM)" target="_blank" rel="noopener noreferrer" class="wiki-link-card" data-search-text="clas linhagens ventrue tremere brujah toreador gangrel nosferatu malkavian lasombra tzimisce giovanni assamita ravnos seguidores de set">
+            <div class="wiki-link-icon">🏛️</div>
+            <div class="wiki-link-info">
+              <span class="wiki-link-title">Clãs & Linhagens de Caim ↗</span>
+              <span class="wiki-link-desc">Histórico, fraquezas de clã, disciplinas nativas e arquétipos dos 13 Clãs.</span>
+            </div>
+          </a>
+
+          <a href="https://whitewolf.fandom.com/wiki/Thaumaturgy_(VTM)" target="_blank" rel="noopener noreferrer" class="wiki-link-card" data-search-text="taumaturgia rituais magia tremere sangue trilhas ritual nivel">
+            <div class="wiki-link-icon">🔮</div>
+            <div class="wiki-link-info">
+              <span class="wiki-link-title">Rituais & Trilhas Taumatúrgicas ↗</span>
+              <span class="wiki-link-desc">Compêndio de rituais de Nível 1 a 5, ingredientes e regras de feitiçaria de sangue.</span>
+            </div>
+          </a>
+
+          <a href="https://whitewolf.fandom.com/wiki/Generation" target="_blank" rel="noopener noreferrer" class="wiki-link-card" data-search-text="geracao sangue pontos maximo turno atributos 13 12 11 10 9 8 7 6 5 4">
+            <div class="wiki-link-icon">🍷</div>
+            <div class="wiki-link-info">
+              <span class="wiki-link-title">Tabela de Geração & Sangue ↗</span>
+              <span class="wiki-link-desc">Limites de atributos, capacidade da reserva de sangue e gasto por turno.</span>
+            </div>
+          </a>
+
+          <a href="https://whitewolf.fandom.com/wiki/Humanity_(VTM)" target="_blank" rel="noopener noreferrer" class="wiki-link-card" data-search-text="humanidade trilha degeneracao pecado frenesi autocontrole coragem consciencia">
+            <div class="wiki-link-icon">⚖️</div>
+            <div class="wiki-link-info">
+              <span class="wiki-link-title">Humanidade & Trilhas de Sabedoria ↗</span>
+              <span class="wiki-link-desc">Hierarquia dos pecados, testes de Consciência, Convicção e perda de Humanidade.</span>
+            </div>
+          </a>
+
+          <a href="https://whitewolf.fandom.com/wiki/Damage_(VTM)" target="_blank" rel="noopener noreferrer" class="wiki-link-card" data-search-text="combate dano contusao letal agravado absorcao vigor fortitude fogo sol">
+            <div class="wiki-link-icon">⚔️</div>
+            <div class="wiki-link-info">
+              <span class="wiki-link-title">Regras de Dano & Combate V20 ↗</span>
+              <span class="wiki-link-desc">Diferenças entre Contusão (/), Letal (X), Agravado (*), fogo e luz do sol.</span>
+            </div>
+          </a>
+
+          <a href="https://whitewolf.fandom.com/wiki/Storytelling_System" target="_blank" rel="noopener noreferrer" class="wiki-link-card" data-search-text="sistema regras dados d10 sucessos dificuldade falha critica botch storyteller">
+            <div class="wiki-link-icon">🎲</div>
+            <div class="wiki-link-info">
+              <span class="wiki-link-title">Sistema Storyteller (D10) ↗</span>
+              <span class="wiki-link-desc">Explicação oficial de paradas de dados, cancelamento por 1s e especializações (10s).</span>
+            </div>
+          </a>
+
+          <a href="#" data-open-merits-catalog class="wiki-link-card" data-search-text="qualidades defeitos meritos falhas pontos fisicos mentais sociais sobrenaturais vantagens desvantagens">
+            <div class="wiki-link-icon">🎭</div>
+            <div class="wiki-link-info">
+              <span class="wiki-link-title">Qualidades & Defeitos (catálogo da ficha)</span>
+              <span class="wiki-link-desc">Busca e filtros por categoria, custos e fontes. Adiciona direto na Página 2.</span>
+            </div>
+          </a>
+
+          <a href="https://saynoise.github.io/Vampiro-Navegador/compendios/qualidades-defeitos.html" target="_blank" rel="noopener noreferrer" class="wiki-link-card" data-search-text="qualidades defeitos compendio completo lista oficial">
+            <div class="wiki-link-icon">📖</div>
+            <div class="wiki-link-info">
+              <span class="wiki-link-title">Qualidades & Defeitos (Compêndio Completo) ↗</span>
+              <span class="wiki-link-desc">Catálogo publicado com busca, filtros por categoria, custos e referências oficiais.</span>
+            </div>
+          </a>
+
+          <a href="https://saynoise.github.io/Vampiro-Navegador/compendios/grimorio-rituais.html" target="_blank" rel="noopener noreferrer" class="wiki-link-card" data-search-text="grimorio rituais taumaturgia necromancia componentes niveis">
+            <div class="wiki-link-icon">📜</div>
+            <div class="wiki-link-info">
+              <span class="wiki-link-title">Grimório de Rituais (V20 Oficial) ↗</span>
+              <span class="wiki-link-desc">Rituais de Taumaturgia e Necromancia (níveis 1 a 5) com componentes, tempos e efeitos.</span>
+            </div>
+          </a>
+        </div>
+
+        <!-- SEÇÃO: TABELAS DE REGRAS V20 -->
+        <div class="wiki-section" data-search-text="tabelas regras humanidade pecados frenesi rotschreck pavor dano cura geracao">
+          <h4 class="wiki-section-title">⚖️ Tabelas de Regras V20</h4>
+
+          <div class="wiki-card-info" data-search-text="humanidade hierarquia pecados degeneracao consciencia">
+            <div class="wiki-card-header">Hierarquia de Pecados (Humanidade)</div>
+            <div class="wiki-card-text">
+              <p>Agir abaixo do seu nível de Humanidade exige um teste de Consciência. Falha: perde 1 ponto. Falha crítica: perde o ponto e pode ganhar uma perturbação.</p>
+              <div class="wiki-table-wrap">
+                <table class="wiki-table">
+                  <thead><tr><th scope="col">Nível</th><th scope="col">Pecado mínimo que exige teste</th></tr></thead>
+                  <tbody>
+                    <tr><td>10</td><td>Pensamentos egoístas</td></tr>
+                    <tr><td>9</td><td>Pequenos atos egoístas</td></tr>
+                    <tr><td>8</td><td>Ferir outra pessoa, mesmo sem querer</td></tr>
+                    <tr><td>7</td><td>Roubo</td></tr>
+                    <tr><td>6</td><td>Violação acidental (ex.: drenar um receptáculo por fome)</td></tr>
+                    <tr><td>5</td><td>Destruição intencional de propriedade</td></tr>
+                    <tr><td>4</td><td>Violação passional (matar no calor do momento)</td></tr>
+                    <tr><td>3</td><td>Violação planejada (assassinato premeditado)</td></tr>
+                    <tr><td>2</td><td>Violação casual (matar sem pensar)</td></tr>
+                    <tr><td>1</td><td>Os atos mais hediondos e depravados</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="wiki-card-info" data-search-text="frenesi besta autocontrole instinto fome provocacao">
+            <div class="wiki-card-header">Frenesi</div>
+            <div class="wiki-card-text">
+              <p>Teste de <strong>Autocontrole/Instinto</strong>. São necessários <strong>5 sucessos</strong> (acumuláveis em turnos) para resistir por completo; menos sucessos apenas adiam. Gastar 1 FV evita o frenesi por um turno (exceto Brujah). Com menos de 5 pontos de sangue, o vampiro fica vulnerável ao frenesi de fome.</p>
+              <div class="wiki-table-wrap">
+                <table class="wiki-table">
+                  <thead><tr><th scope="col">Gatilho</th><th scope="col">Dif.</th></tr></thead>
+                  <tbody>
+                    <tr><td>Cheiro de sangue estando faminto</td><td>3</td></tr>
+                    <tr><td>Ver sangue estando faminto</td><td>4</td></tr>
+                    <tr><td>Ser importunado ou provocado</td><td>4</td></tr>
+                    <tr><td>Provocação física</td><td>6</td></tr>
+                    <tr><td>Provar sangue estando faminto</td><td>6</td></tr>
+                    <tr><td>Ente querido em perigo</td><td>7</td></tr>
+                    <tr><td>Humilhação pública</td><td>8</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="wiki-card-info" data-search-text="rotschreck rötschreck pavor fogo sol medo coragem">
+            <div class="wiki-card-header">Rötschreck (Pavor Vermelho)</div>
+            <div class="wiki-card-text">
+              <p>Diante de fogo ou luz do sol, teste de <strong>Coragem</strong>. Na falha, o vampiro foge em pânico de forma cega. Os sucessos necessários seguem a lógica do frenesi, a critério do Narrador.</p>
+              <div class="wiki-table-wrap">
+                <table class="wiki-table">
+                  <thead><tr><th scope="col">Situação</th><th scope="col">Dif.</th></tr></thead>
+                  <tbody>
+                    <tr><td>Acender um cigarro</td><td>3</td></tr>
+                    <tr><td>Ver uma tocha acesa</td><td>5</td></tr>
+                    <tr><td>Fogueira</td><td>6</td></tr>
+                    <tr><td>Luz do sol encoberta</td><td>7</td></tr>
+                    <tr><td>Ser queimado</td><td>7</td></tr>
+                    <tr><td>Luz do sol direta</td><td>8</td></tr>
+                    <tr><td>Preso em um prédio em chamas</td><td>9</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="wiki-card-info" data-search-text="dano tipos cura tempo contusivo letal agravado sangue descanso absorcao">
+            <div class="wiki-card-header">Tipos de Dano e Tempos de Cura</div>
+            <div class="wiki-card-text">
+              <div class="wiki-table-wrap">
+                <table class="wiki-table">
+                  <thead><tr><th scope="col">Tipo</th><th scope="col">Absorve com</th><th scope="col">Cura (por nível)</th></tr></thead>
+                  <tbody>
+                    <tr><td>/ Contusivo</td><td>Vigor + Fortitude (dano dividido por 2 após absorver)</td><td>1 ponto de sangue</td></tr>
+                    <tr><td>✕ Letal</td><td>Vigor + Fortitude</td><td>1 ponto de sangue</td></tr>
+                    <tr><td>✶ Agravado</td><td>Somente Fortitude</td><td>5 pontos de sangue + 1 dia de descanso</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="wiki-card-info" data-search-text="geracao tabela sangue maximo turno traco limite">
+            <div class="wiki-card-header">Tabela de Geração</div>
+            <div class="wiki-card-text">
+              <div class="wiki-table-wrap">
+                <table class="wiki-table">
+                  <thead><tr><th scope="col">Geração</th><th scope="col">Traço máx.</th><th scope="col">Sangue máx.</th><th scope="col">Por turno</th></tr></thead>
+                  <tbody>
+                    <tr><td>4ª</td><td>9</td><td>50</td><td>10</td></tr>
+                    <tr><td>5ª</td><td>8</td><td>40</td><td>8</td></tr>
+                    <tr><td>6ª</td><td>7</td><td>30</td><td>6</td></tr>
+                    <tr><td>7ª</td><td>6</td><td>20</td><td>4</td></tr>
+                    <tr><td>8ª</td><td>5</td><td>15</td><td>3</td></tr>
+                    <tr><td>9ª</td><td>5</td><td>14</td><td>2</td></tr>
+                    <tr><td>10ª</td><td>5</td><td>13</td><td>1</td></tr>
+                    <tr><td>11ª</td><td>5</td><td>12</td><td>1</td></tr>
+                    <tr><td>12ª</td><td>5</td><td>11</td><td>1</td></tr>
+                    <tr><td>13ª–15ª</td><td>5</td><td>10</td><td>1</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="wiki-card-info" data-search-text="penalidade ferimento vitalidade escoriado machucado ferido espancado aleijado incapacitado">
+            <div class="wiki-card-header">Penalidades de Ferimento</div>
+            <div class="wiki-card-text">
+              Escoriado −0 · Machucado −1 · Ferido −1 · Ferido Gravemente −2 · Espancado −2 · Aleijado −5 · Incapacitado: não age. O rolador desconta a penalidade automaticamente (absorção e dano não são afetados).
+            </div>
+          </div>
+        </div>
+
+        <!-- SEÇÃO: GUIA RÁPIDO DE REGRAS IN-APP -->
+        <div class="wiki-section" data-search-text="guia rapido formulas resumo regras">
+          <h4 class="wiki-section-title">📜 Consulta Rápida de Regras</h4>
+
+          <div class="wiki-card-info" data-search-text="formula rolagem parada dados atributo habilidade">
+            <div class="wiki-card-header">🎲 Como Montar uma Rolagem</div>
+            <div class="wiki-card-text">
+              <strong>Parada de Dados = Atributo + Habilidade</strong><br>
+              Exemplo: <em>Destreza (3) + Armas de Fogo (2) = 5 dados</em>.<br>
+              A dificuldade padrão em V20 é <strong>6</strong>. Cada dado igual ou maior que a dificuldade conta como <strong>1 Sucesso</strong>. Cada resultado <strong>1</strong> cancela 1 sucesso. Se não houver nenhum sucesso e pelo menos um '1', ocorre uma <strong>Falha Crítica (Botch)</strong>!
+            </div>
+          </div>
+
+          <div class="wiki-card-info" data-search-text="danos tipos contusao letal agravado cura absorcao">
+            <div class="wiki-card-header">⚔️ Tipos de Dano & Absorção</div>
+            <div class="wiki-card-text">
+              • <strong>Contusão (/)</strong>: Socos, clavas, armas de impacto. Absorve com Vigor. Cura: 1 Ponto de Sangue por nível.<br>
+              • <strong>Letal (X)</strong>: Facas, espadas, tiros de bala. Absorve com Vigor. Cura: 1 Ponto de Sangue por nível.<br>
+              • <strong>Agravado (*)</strong>: Garras/presas sobrenaturais, Fogo, Luz Solar. Absorve <em>apenas</em> com <strong>Fortitude</strong>! Cura: 5 Pontos de Sangue + 1 dia de descanso por nível.
+            </div>
+          </div>
+
+          <div class="wiki-card-info" data-search-text="forca de vontade permanente temporaria sucesso automatico">
+            <div class="wiki-card-header">🔥 Usos de Força de Vontade</div>
+            <div class="wiki-card-text">
+              Gastar <strong>1 ponto de Força de Vontade Temporária</strong> permite:<br>
+              • Garantir <strong>1 Sucesso Automático</strong> em uma ação (não cancelável por '1's). Declare antes de rolar.<br>
+              • <em>Regra opcional da ficha:</em> re-rolar uma vez os dados sem sucesso.<br>
+              • Ignorar <strong>todas as penalidades de ferimento</strong> de Vitalidade por 1 turno completo.<br>
+              • Resistir a comandos de Dominação, Presença ou impulsos do Frenesi temporariamente.
+            </div>
+          </div>
+
+          <div class="wiki-card-info" data-search-text="gasto sangue cura atributos fisicos geracao">
+            <div class="wiki-card-header">🩸 Usos dos Pontos de Sangue</div>
+            <div class="wiki-card-text">
+              • <strong>Curar Danos</strong>: 1 ponto cura 1 nível de Contusão ou Letal instantaneamente.<br>
+              • <strong>Aumentar Atributos Físicos</strong>: 1 ponto aumenta Força, Destreza ou Vigor em +1 por 1 cena (respeitando o limite por geração).<br>
+              • <strong>Ativar Disciplinas</strong>: Ativa poderes vampíricos (Celeridade, Taumaturgia, etc.).
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- DRAWER LATERAL DE HISTÓRICO DE ROLAGENS (LADO DIREITO) -->
+  <div id="dice-history-drawer" class="history-drawer-overlay hidden no-print">
+    <div class="history-drawer-panel">
+      <div class="history-drawer-header">
+        <div class="drawer-title-group">
+          <span class="drawer-symbol">𝕮</span>
+          <h3>HISTÓRICO DE ROLAGENS</h3>
+        </div>
+        <div class="drawer-header-actions">
+          <button type="button" id="btn-clear-dice-history" class="btn-clear-history" title="Limpar histórico de rolagens">🗑️ Limpar</button>
+          <button type="button" id="btn-close-dice-history" class="btn-modal-close" title="Fechar">✕</button>
+        </div>
+      </div>
+
+      <div class="history-drawer-info">
+        <span id="history-total-tag">0 rolagens gravadas</span>
+      </div>
+
+      <div class="history-drawer-body" id="dice-history-list">
+        <!-- Itens inseridos dinamicamente -->
+      </div>
+    </div>
+  </div>
+
+  <script src="qualidades-defeitos-data.js"></script>
+  <script src="v20-automacoes.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

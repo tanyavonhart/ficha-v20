@@ -1,0 +1,20 @@
+{
+  "name": "Ficha V20 — Vampiro: A Máscara",
+  "short_name": "Ficha V20",
+  "description": "Ficha de personagem de Vampiro: A Máscara (V20) com rolador de dados, grimório e controle de XP.",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a0a0d",
+  "theme_color": "#0a0a0d",
+  "categories": ["games", "entertainment", "utilities"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}
