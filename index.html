@@ -59,7 +59,7 @@
         <div class="brand-text">
           <h1>VAMPIRO: A MÁSCARA</h1>
           <span class="edition-badge">Edição 20º Aniversário (V20) • Ficha NÃO OFICIAL FEITA POR FÃS</span>
-          <span class="app-version" data-app-version>v2.1</span>
+          <span class="app-version" data-app-version>v2.4</span>
         </div>
       </div>
 
@@ -428,6 +428,32 @@
     </div>
   </div>
 
+  <!-- CATÁLOGO DO GRIMÓRIO -->
+  <div id="catalog-modal" class="gothic-modal-overlay hidden no-print" role="dialog" aria-modal="true" aria-labelledby="catalog-title">
+    <div class="gothic-modal-box catalog-box">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">📚</span>
+          <h3 id="catalog-title">CATÁLOGO DO GRIMÓRIO</h3>
+        </div>
+        <button type="button" id="btn-close-catalog" class="btn-modal-close" title="Fechar">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="catalog-tabs" role="tablist" aria-label="Tipo de item">
+          <button type="button" class="layout-tab is-active" data-catalog-kind="ritual" role="tab" aria-selected="true">📜 Rituais</button>
+          <button type="button" class="layout-tab" data-catalog-kind="spell" role="tab" aria-selected="false">🔮 Feitiços</button>
+          <button type="button" class="layout-tab" data-catalog-kind="power" role="tab" aria-selected="false">✴️ Poderes</button>
+        </div>
+        <div class="catalog-search-row">
+          <input type="text" id="catalog-search" placeholder="Buscar por nome, trilha, Disciplina ou efeito" aria-label="Buscar no catálogo">
+          <span id="catalog-count" class="catalog-count"></span>
+        </div>
+        <ul id="catalog-list" class="catalog-list"></ul>
+        <p class="xp-form-hint">Os itens vêm de arquivos deste projeto, sem buscar nada na internet. Os resumos foram escritos para a ficha: confira o livro e ajuste o que a sua mesa usar.</p>
+      </div>
+    </div>
+  </div>
+
   <!-- SINCRONIZAÇÃO -->
   <div id="sync-modal" class="gothic-modal-overlay hidden no-print" role="dialog" aria-modal="true" aria-labelledby="sync-title">
     <div class="gothic-modal-box sync-box">
@@ -756,6 +782,34 @@
   </div>
   <div id="layout-quickbar" class="layout-quickbar no-print" role="toolbar" aria-label="Layouts rápidos"></div>
 
+  <div id="clock-bar" class="clock-bar no-print" data-lock-exempt>
+    <span id="clock-date" class="clock-bar-date">🌙 Noite</span>
+    <strong id="clock-time" class="clock-bar-time">20:00</strong>
+    <span id="clock-dawn" class="clock-bar-dawn"></span>
+    <span id="clock-nights" class="clock-bar-nights"></span>
+    <span class="clock-bar-actions">
+      <button type="button" class="clock-bar-btn" data-clock-add="10" title="Avançar 10 minutos">+10m</button>
+      <button type="button" class="clock-bar-btn" data-clock-add="60" title="Avançar 1 hora">+1h</button>
+      <button type="button" class="clock-bar-btn" data-rest title="Dormir até a próxima noite: +1 FV e avanço da cura">🛌</button>
+      <button type="button" id="btn-clock-edit" class="clock-bar-btn" aria-expanded="false" aria-controls="clock-edit" title="Ajustar data, hora, anoitecer e amanhecer">✎</button>
+    </span>
+    <div id="clock-edit" class="clock-edit clock-bar-edit" hidden>
+      <label>Dia <input type="number" id="clock-edit-day" min="1" max="31" inputmode="numeric"></label>
+      <label>Mês <select id="clock-edit-month"><option value="1">janeiro</option><option value="2">fevereiro</option><option value="3">março</option><option value="4">abril</option><option value="5">maio</option><option value="6">junho</option><option value="7">julho</option><option value="8">agosto</option><option value="9">setembro</option><option value="10">outubro</option><option value="11">novembro</option><option value="12">dezembro</option></select></label>
+      <label>Ano <input type="number" id="clock-edit-year" min="1" max="9999" inputmode="numeric"></label>
+      <label>Hora <input type="time" id="clock-edit-time"></label>
+      <label>Anoitecer <input type="time" id="clock-edit-dusk"></label>
+      <label>Amanhecer <input type="time" id="clock-edit-dawn"></label>
+      <label class="clock-bar-custom">Avançar
+        <span>
+          <input type="number" id="clock-custom-minutes" min="1" max="100000" inputmode="numeric" placeholder="min" aria-label="Minutos a avançar">
+          <button type="button" id="btn-clock-custom" class="btn-tiny">min</button>
+        </span>
+      </label>
+    </div>
+  </div>
+
+
   <!-- NOTIFICAÇÃO TOAST FLUTUANTE -->
   <!-- AVISO DE PRIMEIRO ACESSO (NO-PRINT) -->
   <div id="welcome-modal" class="gothic-modal-overlay hidden no-print" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
@@ -1067,38 +1121,6 @@
                 </div>
               </div>
             </div>
-
-            <!-- Relógio da crônica -->
-            <div class="status-card clock-card draggable-card" data-window-id="win-clock">
-              <h4 class="category-heading draggable-handle"><span class="drag-grip">✥</span> RELÓGIO DA CRÔNICA</h4>
-              <div id="clock-card-body" class="clock-body">
-                <p id="clock-date" class="clock-date">🌙 Noite</p>
-                <p class="clock-time-line"><strong id="clock-time" class="clock-time">20:00</strong> <span id="clock-dawn" class="clock-dawn"></span></p>
-                <p id="clock-nights" class="clock-nights"></p>
-              </div>
-              <div class="clock-controls no-print" data-lock-exempt>
-                <button type="button" class="btn-tiny" data-clock-add="10">+10 min</button>
-                <button type="button" class="btn-tiny" data-clock-add="30">+30 min</button>
-                <button type="button" class="btn-tiny" data-clock-add="60">+1 h</button>
-                <span class="clock-custom">
-                  <input type="number" id="clock-custom-minutes" min="1" max="100000" inputmode="numeric" placeholder="min" aria-label="Minutos a avançar">
-                  <button type="button" id="btn-clock-custom" class="btn-tiny">Avançar</button>
-                </span>
-              </div>
-              <div class="clock-controls no-print" data-lock-exempt>
-                <button type="button" class="btn-weapon btn-weapon-attack" data-rest title="Recupera 1 FV, avança a cura de um agravado e leva à próxima noite">🛌 Dormir até a próxima noite</button>
-                <button type="button" id="btn-clock-edit" class="btn-tiny" title="Ajustar data, hora, anoitecer e amanhecer">✎ Ajustar</button>
-              </div>
-              <div id="clock-edit" class="clock-edit no-print" data-lock-exempt hidden>
-                <label>Dia <input type="number" id="clock-edit-day" min="1" max="31" inputmode="numeric"></label>
-                <label>Mês <select id="clock-edit-month"><option value="1">janeiro</option><option value="2">fevereiro</option><option value="3">março</option><option value="4">abril</option><option value="5">maio</option><option value="6">junho</option><option value="7">julho</option><option value="8">agosto</option><option value="9">setembro</option><option value="10">outubro</option><option value="11">novembro</option><option value="12">dezembro</option></select></label>
-                <label>Ano <input type="number" id="clock-edit-year" min="1" max="9999" inputmode="numeric"></label>
-                <label>Hora <input type="time" id="clock-edit-time"></label>
-                <label>Anoitecer <input type="time" id="clock-edit-dusk"></label>
-                <label>Amanhecer <input type="time" id="clock-edit-dawn"></label>
-              </div>
-            </div>
-
             <!-- Diário de sessões -->
             <div class="status-card sessions-card draggable-card" data-window-id="win-sessions">
               <h4 class="category-heading draggable-handle"><span class="drag-grip">✥</span> DIÁRIO DE SESSÕES</h4>
@@ -1390,7 +1412,7 @@
 
       <footer class="sheet-footer">
         <div class="footer-divider"></div>
-        <p>Vampiro: A Máscara © White Wolf Publishing — Página 1: Traços & Status · Ficha <span data-app-version>v2.1</span></p>
+        <p>Vampiro: A Máscara © White Wolf Publishing — Página 1: Traços & Status · Ficha <span data-app-version>v2.4</span></p>
       </footer>
 
     </main>
@@ -1447,6 +1469,7 @@
                 <span aria-hidden="true">✴️</span> Poderes <span class="grimoire-tab-count" data-grimoire-count="power">0</span>
               </button>
             </div>
+            <button type="button" id="btn-open-catalog" class="btn-collapse-all grimoire-catalog-btn" data-lock-exempt title="Escolher de um catálogo pronto">📚 Catálogo</button>
             <button type="button" id="btn-grimoire-collapse-all" class="btn-collapse-all grimoire-collapse-all" data-lock-exempt>▾ Minimizar todos</button>
             </div>
 
@@ -1560,7 +1583,7 @@
 
       <footer class="sheet-footer">
         <div class="footer-divider"></div>
-        <p>Vampiro: A Máscara © White Wolf Publishing — Página 2: Grimório & Características · Ficha <span data-app-version>v2.1</span></p>
+        <p>Vampiro: A Máscara © White Wolf Publishing — Página 2: Grimório & Características · Ficha <span data-app-version>v2.4</span></p>
       </footer>
 
     </main>
@@ -2003,6 +2026,9 @@
   </div>
 
   <script src="qualidades-defeitos-data.js"></script>
+  <script src="rituais-data.js"></script>
+  <script src="feiticos-data.js"></script>
+  <script src="poderes-disciplinas-data.js"></script>
   <script src="v20-automacoes.js"></script>
   <script src="app.js"></script>
 </body>

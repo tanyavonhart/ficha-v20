@@ -1,7 +1,7 @@
 {
   "name": "ficha-v20",
   "private": true,
-  "version": "2.1.0",
+  "version": "2.4.0",
   "description": "Ficha de personagem de Vampiro: A Máscara (V20) com sincronização opcional entre aparelhos.",
   "type": "module",
   "dependencies": {

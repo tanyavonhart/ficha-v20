@@ -3260,7 +3260,11 @@ function setupEventListeners() {
         if (page1) page1.classList.remove('hidden-page');
         if (page2) page2.classList.remove('hidden-page');
       }
-      setTimeout(() => LinkCableSystem.updateWebLines(), 50);
+      setTimeout(() => {
+        LinkCableSystem.updateWebLines();
+        // A página que estava escondida só tem altura agora: reencaixa os quadros
+        if (typeof CardBalancer !== 'undefined') CardBalancer.schedule();
+      }, 60);
     });
   });
 
@@ -3269,6 +3273,7 @@ function setupEventListeners() {
   if (btnResetLayout) {
     btnResetLayout.addEventListener('click', () => {
       DraggableWindowManager.resetPositions();
+      if (typeof CardBalancer !== 'undefined') CardBalancer.schedule();
     });
   }
 

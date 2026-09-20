@@ -5469,7 +5469,7 @@ const BUILTIN_LAYOUTS = [
     hint: 'Físicos, Vitalidade, sangue, armas, absorção e feitiços',
     layout: {
       sections: { notes: true },
-      cards: { 'win-attr-social': true, 'win-knowledges': true, 'win-specializations': true, 'win-humanity': true, 'win-virtues': true, 'win-clock': true, 'win-paths': true },
+      cards: { 'win-attr-social': true, 'win-knowledges': true, 'win-specializations': true, 'win-humanity': true, 'win-virtues': true, 'win-paths': true },
       hidden: { 'win-xp': true, 'win-sessions': true, 'win-extended': true, 'win-backgrounds': true, 'win-weakness': true }
     }
   },
@@ -5478,7 +5478,7 @@ const BUILTIN_LAYOUTS = [
     hint: 'Sociais e Mentais, Habilidades, Antecedentes, Virtudes e anotações',
     layout: {
       sections: { combat: true, grimoire: true },
-      cards: { 'win-attr-physical': true, 'win-health': true, 'win-blood': true, 'win-clock': true },
+      cards: { 'win-attr-physical': true, 'win-health': true, 'win-blood': true },
       hidden: { 'win-xp': true, 'win-sessions': true, 'win-extended': true }
     }
   },
@@ -5606,6 +5606,7 @@ const LayoutManager = {
     char.settings.layoutActive = null;
     AppState.saveToStorage();
     this.apply(char);
+    CardBalancer.schedule({ force: true });
   },
 
   toggle(kind, id) {
@@ -5733,6 +5734,7 @@ const LayoutManager = {
     }
     AppState.saveToStorage();
     this.apply(char);
+    CardBalancer.schedule({ force: true });
     showToast(`Preset “${preset.name}” aplicado nesta ficha.`, 'success');
   },
 
@@ -5990,8 +5992,8 @@ const ChronicleClock = {
     document.body.classList.toggle('is-daylight', !ph.night);
     const nights = document.getElementById('clock-nights');
     if (nights) nights.textContent = c.nights ? `${c.nights} noite(s) passadas` : '';
-    const card = document.getElementById('clock-card-body');
-    if (card) card.classList.toggle('is-day', !ph.night);
+    const bar = document.getElementById('clock-bar');
+    if (bar) bar.classList.toggle('is-day', !ph.night);
 
     // Campos de edição
     const set = (id, v) => { const el = document.getElementById(id); if (el && document.activeElement !== el) el.value = v; };
@@ -6890,7 +6892,7 @@ const CommandRoller = {
 // Passos: conceito e clã → Atributos 7/5/3 → Habilidades 13/9/5 → Vantagens
 // → Características derivadas → Pontos de Bônus → Ficha final.
 // =============================================================================
-const APP_VERSION = '2.1';
+const APP_VERSION = '2.4';
 
 const WIZ_ATTRS = {
   physical: { label: 'Físicos', keys: ['strength', 'dexterity', 'stamina'] },
@@ -9406,6 +9408,368 @@ const SyncManager = {
   }
 };
 
+/**
+ * Catálogos do Grimório (arquivos locais do projeto).
+ * Abre uma busca com rituais, feitiços e poderes e cria o item já preenchido.
+ */
+const GrimoireCatalog = {
+  query: '',
+  kind: 'ritual',
+
+  source(kind) {
+    if (kind === 'ritual') {
+      return (typeof RITUAIS_DATA !== 'undefined' ? RITUAIS_DATA : []).map(r => ({
+        nome: r.nome, nivel: r.nivel, grupo: r.escola, efeito: r.efeito,
+        tradition: /necroman/i.test(r.escola) ? 'necromancia' : 'taumaturgia'
+      }));
+    }
+    if (kind === 'spell') {
+      return (typeof FEITICOS_DATA !== 'undefined' ? FEITICOS_DATA : []).map(f => ({
+        nome: f.nome, nivel: f.nivel, grupo: `${f.trilha} · ${f.escola}`, efeito: f.efeito, trilha: f.trilha,
+        tradition: /necroman/i.test(f.escola) ? 'necromancia' : 'taumaturgia'
+      }));
+    }
+    return (typeof PODERES_DATA !== 'undefined' ? PODERES_DATA : []).map(p => ({
+      nome: p.nome, nivel: p.nivel, grupo: p.disciplina, efeito: p.efeito,
+      discipline: p.disciplina, parada: p.parada
+    }));
+  },
+
+  /** Primeiro o que combina com as Disciplinas da ficha, depois o resto. */
+  list(char, kind) {
+    const all = this.source(kind);
+    const q = stripAccents(this.query.toLowerCase().trim());
+    const filtered = q
+      ? all.filter(x => stripAccents(`${x.nome} ${x.grupo} ${x.efeito}`.toLowerCase()).includes(q))
+      : all;
+    const owned = (char.disciplines || []).map(d => stripAccents((d.name || '').toLowerCase()));
+    const relevante = (x) => owned.some(n => n && stripAccents(x.grupo.toLowerCase()).split(/[^a-z]+/).some(w => w.length > 3 && n.includes(w)));
+    return [...filtered.filter(relevante), ...filtered.filter(x => !relevante(x))];
+  },
+
+  /** Traduz a parada do catálogo ("Percepção + Prontidão") para os campos da ficha. */
+  parsePool(parada) {
+    if (!parada || parada === '—') return {};
+    const rows = [...document.querySelectorAll('.trait-row[data-trait]')];
+    const find = (txt) => {
+      const alvo = stripAccents(txt.toLowerCase().trim());
+      const row = rows.find(r => stripAccents((r.getAttribute('data-label') || '').toLowerCase()) === alvo);
+      return row ? row.getAttribute('data-trait') : '';
+    };
+    const [a, b] = String(parada).split('+').map(x => x.trim());
+    const out = {};
+    const primary = a ? find(a) : '';
+    const secondary = b ? find(b) : '';
+    if (primary) out.primary = primary;
+    if (secondary) out.secondary = secondary;
+    return out;
+  },
+
+  add(char, item) {
+    const kind = this.kind;
+    const base = {
+      kind,
+      name: item.nome,
+      level: clampInt(item.nivel, 1, 9, 1),
+      description: item.trilha ? `${item.trilha}: ${item.efeito || ''}` : (item.efeito || '')
+    };
+    if (kind === 'power') {
+      base.discipline = item.discipline || '';
+      base.diffMode = 'fixed';
+      base.difficulty = 6;
+      Object.assign(base, this.parsePool(item.parada));
+    } else {
+      base.tradition = item.tradition || 'taumaturgia';
+      if (kind === 'ritual') {
+        base.primary = 'attributes.mental.intelligence';
+        base.secondary = 'abilities.knowledges.occult';
+      }
+    }
+    const sp = SpellManager.normalize(base);
+    SpellManager.list(char).push(sp);
+    AppState.saveToStorage();
+    SpellManager.setTab(kind);
+    SpellManager.render(char);
+    showToast(`${GRIMOIRE_KINDS[kind].icon} “${sp.name}” adicionado ao Grimório.`, 'success');
+  },
+
+  render() {
+    const char = AppState.activeCharacter;
+    const box = document.getElementById('catalog-list');
+    if (!box || !char) return;
+    const items = this.list(char, this.kind);
+    const count = document.getElementById('catalog-count');
+    if (count) count.textContent = `${items.length} item(ns)`;
+    document.querySelectorAll('[data-catalog-kind]').forEach(b => {
+      const on = b.dataset.catalogKind === this.kind;
+      b.classList.toggle('is-active', on);
+      b.setAttribute('aria-selected', String(on));
+    });
+    box.innerHTML = '';
+    if (!items.length) {
+      // Talvez o que ele procura esteja em outra aba
+      const outras = ['ritual', 'spell', 'power']
+        .filter(k => k !== this.kind)
+        .map(k => ({ k, n: this.list(char, k).length }))
+        .filter(x => x.n > 0);
+      const dica = outras.length
+        ? ` Em ${outras.map(x => `${GRIMOIRE_KINDS[x.k].plural} (${x.n})`).join(' e ')} há resultados.`
+        : '';
+      box.innerHTML = `<li class="catalog-empty">Nada encontrado nesta aba.${escapeHtml(dica)}</li>`;
+      return;
+    }
+    items.slice(0, 120).forEach(item => {
+      const li = document.createElement('li');
+      li.className = 'catalog-item';
+      li.innerHTML = `
+        <span class="catalog-level">${item.nivel}</span>
+        <span class="catalog-info">
+          <strong>${escapeHtml(item.nome)}</strong>
+          <small>${escapeHtml(item.grupo)}${item.parada && item.parada !== '—' ? ` · ${escapeHtml(item.parada)}` : ''}</small>
+          <em>${escapeHtml(item.efeito || '')}</em>
+        </span>`;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn-tiny';
+      btn.textContent = '＋ Adicionar';
+      btn.addEventListener('click', () => this.add(char, item));
+      li.appendChild(btn);
+      box.appendChild(li);
+    });
+  },
+
+  open(kind) {
+    const m = document.getElementById('catalog-modal');
+    if (!m) return;
+    this.kind = GRIMOIRE_KINDS[kind] ? kind : SpellManager.activeTab;
+    this.query = '';
+    const input = document.getElementById('catalog-search');
+    if (input) input.value = '';
+    this.render();
+    m.classList.remove('hidden');
+    if (input) setTimeout(() => input.focus(), 40);
+  },
+
+  close() {
+    const m = document.getElementById('catalog-modal');
+    if (m) m.classList.add('hidden');
+  },
+
+  bind() {
+    const on = (id, ev, fn) => { const el = document.getElementById(id); if (el) el.addEventListener(ev, fn); };
+    on('btn-open-catalog', 'click', () => this.open(SpellManager.activeTab));
+    on('btn-close-catalog', 'click', () => this.close());
+    on('catalog-search', 'input', e => { this.query = e.target.value; this.render(); });
+    document.querySelectorAll('[data-catalog-kind]').forEach(b => {
+      b.addEventListener('click', () => { this.kind = b.dataset.catalogKind; this.render(); });
+    });
+    const m = document.getElementById('catalog-modal');
+    if (m) {
+      m.addEventListener('click', e => { if (e.target === m) this.close(); });
+      m.addEventListener('keydown', e => { if (e.key === 'Escape') this.close(); });
+    }
+  }
+};
+
+const BALANCE_KEY = 'v20_card_balance';
+
+/**
+ * Arrumação dos quadros.
+ *
+ * Os quadros ficam na ordem padrão, cada um na sua coluna (o Ponto de Sangue
+ * continua no centro). Aqui só cuidamos de duas coisas:
+ *  1. limpar sobras da versão anterior, que tentava remanejar os quadros;
+ *  2. impedir que um quadro arrastado fique por cima de outro — se isso
+ *     acontecer, a posição dele volta ao lugar de origem.
+ *
+ * O espaçamento fluido e o "não esticar" ficam por conta do CSS.
+ */
+const CardBalancer = {
+  /** Remove estilos que a versão 2.3 gravava nos quadros e nas grades. */
+  cleanup() {
+    document.querySelectorAll('[data-window-id]').forEach(card => {
+      if (card.style.gridRowEnd) card.style.gridRowEnd = '';
+    });
+    document.querySelectorAll('.two-col-grid, .three-col-grid').forEach(grid => {
+      if (grid.style.gridAutoRows) grid.style.gridAutoRows = '';
+      if (grid.style.alignItems) grid.style.alignItems = '';
+    });
+  },
+
+  rect(el) {
+    const r = el.getBoundingClientRect();
+    return { top: r.top + window.scrollY, left: r.left + window.scrollX, bottom: r.bottom + window.scrollY, right: r.right + window.scrollX };
+  },
+
+  overlap(a, b) {
+    const margem = 6;
+    return a.left < b.right - margem && b.left < a.right - margem
+      && a.top < b.bottom - margem && b.top < a.bottom - margem;
+  },
+
+  /** Quadro arrastado que cobre outro volta para a posição original. */
+  fixOverlaps({ silent = false } = {}) {
+    const cards = [...document.querySelectorAll('[data-window-id]')]
+      .filter(c => c.offsetParent !== null && !c.classList.contains('is-card-hidden'));
+    const movidos = cards.filter(c => c.classList.contains('is-custom-positioned'));
+    if (!movidos.length) return 0;
+
+    let corrigidos = 0;
+    movidos.forEach(card => {
+      const meu = this.rect(card);
+      const bate = cards.some(outro => outro !== card && this.overlap(meu, this.rect(outro)));
+      if (!bate) return;
+      card.style.transform = '';
+      card.classList.remove('is-custom-positioned');
+      const id = card.dataset.windowId;
+      if (DraggableWindowManager.positions[id]) {
+        delete DraggableWindowManager.positions[id].x;
+        delete DraggableWindowManager.positions[id].y;
+        DraggableWindowManager.savePositions();
+      }
+      corrigidos++;
+    });
+    if (corrigidos && !silent) {
+      showToast(`${corrigidos} quadro(s) estavam por cima de outros e voltaram ao lugar.`, 'info');
+      LinkCableSystem.updateWebLines();
+    }
+    return corrigidos;
+  },
+
+  /**
+   * Reequilibra as colunas das Vantagens quando uma delas fica muito maior que
+   * as outras — por exemplo depois de ocultar, minimizar ou expandir um quadro.
+   * A ordem padrão é o ponto de partida e quadros arrastados à mão ficam onde
+   * estão; quem for movido perde o deslocamento antigo, para nunca sobrepor.
+   */
+  remember(grid) {
+    if (grid.dataset.orderSaved) return;
+    [...grid.querySelectorAll(':scope > .vantagens-col > [data-window-id]')]
+      .forEach((card, i) => { card.dataset.originalOrder = String(i); });
+    grid.dataset.orderSaved = '1';
+  },
+
+  columnsOf(grid) { return [...grid.querySelectorAll(':scope > .vantagens-col')]; },
+
+  singleColumn(grid) {
+    return (getComputedStyle(grid).gridTemplateColumns || '').split(' ').filter(Boolean).length <= 1;
+  },
+
+  columnHeights(cols) {
+    return cols.map(col => [...col.children]
+      .filter(c => c.dataset.windowId && !c.classList.contains('is-card-hidden'))
+      .reduce((total, c) => total + c.getBoundingClientRect().height + 14, 0));
+  },
+
+  balance(grid, { force = false } = {}) {
+    this.remember(grid);
+    const cols = this.columnsOf(grid);
+    if (cols.length < 2) return false;
+
+    const cards = [...grid.querySelectorAll(':scope > .vantagens-col > [data-window-id]')]
+      .sort((a, b) => (+a.dataset.originalOrder || 0) - (+b.dataset.originalOrder || 0));
+
+    if (this.singleColumn(grid)) {
+      // Celular: volta à ordem original, em sequência
+      const porColuna = Math.ceil(cards.length / cols.length);
+      cards.forEach((card, i) => {
+        const alvo = cols[Math.min(cols.length - 1, Math.floor(i / porColuna))];
+        if (card.parentElement !== alvo) alvo.appendChild(card);
+      });
+      return false;
+    }
+
+    const alturas = this.columnHeights(cols);
+    const desnivel = Math.max(...alturas) - Math.min(...alturas);
+    const maiorQuadro = Math.max(...cards.map(c => c.getBoundingClientRect().height || 0));
+    // Só mexe quando o desnível é maior que um quadro médio: evita dança de caixas
+    if (!force && desnivel < Math.max(180, maiorQuadro * 0.8)) return false;
+
+    const soma = new Array(cols.length).fill(0);
+    const plano = cols.map(() => []);
+    const altura = card => card.classList.contains('is-card-hidden')
+      ? 0
+      : (card.getBoundingClientRect().height || 0) + 14;
+
+    // Quadros fixos: o Ponto de Sangue mora sempre na coluna do meio
+    const meio = Math.floor(cols.length / 2);
+    const fixos = { 'win-blood': meio };
+    cards.forEach(card => {
+      const col = fixos[card.dataset.windowId];
+      if (col === undefined) return;
+      plano[col].push(card);
+      soma[col] += altura(card);
+    });
+
+    cards.forEach(card => {
+      if (fixos[card.dataset.windowId] !== undefined) return;
+      let idx = 0;
+      for (let i = 1; i < soma.length; i++) if (soma[i] < soma[idx] - 0.5) idx = i;
+      plano[idx].push(card);
+      soma[idx] += altura(card);
+    });
+
+    // Dentro de cada coluna, mantém a ordem padrão da ficha
+    plano.forEach(lista => lista.sort((a, b) => (+a.dataset.originalOrder || 0) - (+b.dataset.originalOrder || 0)));
+
+    let mexeu = false;
+    plano.forEach((lista, i) => {
+      const atual = [...cols[i].children].filter(c => c.dataset.windowId);
+      const igual = atual.length === lista.length && atual.every((el, j) => el === lista[j]);
+      if (igual) return;
+      lista.forEach(card => {
+        if (card.parentElement !== cols[i]) {
+          // Quadro que muda de coluna não pode manter o deslocamento antigo
+          card.style.transform = '';
+          card.classList.remove('is-custom-positioned');
+          const pos = DraggableWindowManager.positions[card.dataset.windowId];
+          if (pos) { delete pos.x; delete pos.y; DraggableWindowManager.savePositions(); }
+          mexeu = true;
+        }
+        cols[i].appendChild(card);
+      });
+    });
+    return mexeu;
+  },
+
+  run({ force = false } = {}) {
+    this.cleanup();
+    let mexeu = false;
+    document.querySelectorAll('.advantages-unified-grid').forEach(g => {
+      if (this.balance(g, { force })) mexeu = true;
+    });
+    this.fixOverlaps();
+    if (mexeu) LinkCableSystem.updateWebLines();
+    return mexeu;
+  },
+
+  schedule({ force = false } = {}) {
+    if (this._raf) cancelAnimationFrame(this._raf);
+    this._force = this._force || force;
+    this._raf = requestAnimationFrame(() => {
+      this._raf = null;
+      const f = this._force;
+      this._force = false;
+      // Espera o navegador terminar de redesenhar antes de medir
+      setTimeout(() => this.run({ force: f }), 60);
+    });
+  },
+
+  bind() {
+    this.cleanup();
+    window.addEventListener('resize', () => this.schedule());
+    // Quadro que cresce ou encolhe pede um reequilíbrio
+    if (window.ResizeObserver && !this._ro) {
+      this._ro = new ResizeObserver(() => this.schedule());
+      document.querySelectorAll('[data-window-id]').forEach(c => this._ro.observe(c));
+    }
+    // Primeira arrumação já sai equilibrada
+    setTimeout(() => this.run({ force: true }), 700);
+  },
+
+  observe(card) { if (this._ro && card) this._ro.observe(card); }
+};
+
 /** Mensagem simples no webhook do Discord (usada pela Iniciativa). */
 async function sendDiscordText(text) {
   if (typeof DiscordIntegration === 'undefined') return;
@@ -9899,6 +10263,7 @@ const ExtRenderer = {
     FX.render(char);
     ExtendedActions.render(char);
     LayoutManager.apply(char);
+    CardBalancer.schedule();
     UndoManager.ensureBaseline();
   },
 
@@ -9984,6 +10349,8 @@ const ExtEvents = {
     CommandRoller.bind();
     CharacterWizard.bind();
     SyncManager.bind();
+    GrimoireCatalog.bind();
+    CardBalancer.bind();
     FX.bind();
     AmbientAudio.bind();
     document.querySelectorAll('[data-app-version]').forEach(el => { el.textContent = `v${APP_VERSION}`; });

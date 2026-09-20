@@ -5101,3 +5101,105 @@ body.theme-parchment .btn-discipline-blood.is-on { color: #2b1d0e; }
   .sync-grid { grid-template-columns: 1fr; }
   .sync-actions .btn { flex: 1 1 100%; }
 }
+
+/* Catálogo do Grimório */
+.grimoire-catalog-btn { margin-bottom: 5px; }
+.catalog-box { max-width: 760px; }
+.catalog-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.catalog-search-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.catalog-search-row input {
+  flex: 1 1 auto; min-width: 0; padding: 8px 10px;
+  font-family: var(--font-body); font-size: 1rem; color: var(--text-primary);
+  background: var(--bg-input); border: 1px solid var(--border-accent); border-radius: 4px;
+}
+.catalog-count { font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; }
+.catalog-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; max-height: 52vh; overflow-y: auto; }
+.catalog-item {
+  display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 10px;
+  padding: 7px 9px; background: rgba(0, 0, 0, 0.22); border: 1px solid var(--border-subtle); border-radius: 4px;
+}
+.catalog-level {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 50%;
+  font-family: var(--font-header); font-weight: 800; color: var(--gold-bright);
+  border: 1px solid var(--border-accent);
+}
+.catalog-info { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.catalog-info strong { font-size: 0.95rem; color: var(--text-primary); }
+.catalog-info small { font-size: 0.76rem; color: var(--gold-bright); }
+.catalog-info em { font-size: 0.82rem; font-style: normal; color: var(--text-muted); }
+.catalog-empty { font-style: italic; color: var(--text-muted); padding: 10px 0; }
+body.theme-parchment .catalog-item { background: rgba(150, 120, 68, 0.18); }
+@media (max-width: 560px) {
+  .catalog-item { grid-template-columns: 30px minmax(0, 1fr); }
+  .catalog-item .btn-tiny { grid-column: 1 / -1; }
+}
+
+/* =============================================================================
+   v2.3.1 · Quadros: ordem fixa, espaçamento fluido e sem sobreposição
+   ============================================================================= */
+@media (min-width: 901px) {
+  /* As colunas acompanham a largura da tela sem espremer o conteúdo */
+  .three-col-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(12px, 1.2vw, 22px);
+    align-items: start;
+  }
+  .two-col-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(12px, 1.2vw, 22px);
+    align-items: start;
+  }
+  /* Cada quadro ocupa só a altura do próprio conteúdo */
+  .two-col-grid > [data-window-id],
+  .three-col-grid > [data-window-id] { align-self: start; height: auto; }
+  .vantagens-col { gap: clamp(10px, 0.9vw, 16px); align-content: start; }
+}
+
+/* O Ponto de Sangue fica no centro e não é empurrado pelos vizinhos */
+.vantagens-col > [data-window-id="win-blood"] { align-self: stretch; }
+
+/* Quadro arrastado fica acima dos outros só enquanto está sendo movido */
+.draggable-card.is-dragging { z-index: 60; }
+.draggable-card.is-custom-positioned { z-index: 5; }
+
+/* =============================================================================
+   RELÓGIO DA CRÔNICA — barra compacta no topo
+   ============================================================================= */
+.clock-bar {
+  position: relative;
+  display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px 10px;
+  max-width: 1360px; margin: 0 auto 10px; padding: 5px 14px; box-sizing: border-box;
+  font-family: var(--font-header); font-size: 0.78rem; color: var(--text-secondary);
+  background: rgba(0, 0, 0, 0.28); border: 1px solid var(--border-subtle); border-radius: 18px;
+}
+.clock-bar-date { color: var(--gold-bright); }
+.clock-bar-time { font-size: 1.05rem; letter-spacing: 1px; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.clock-bar-dawn, .clock-bar-nights { font-family: var(--font-body); font-size: 0.76rem; color: var(--text-muted); }
+.clock-bar-nights:empty { display: none; }
+.clock-bar.is-day .clock-bar-time, .clock-bar .clock-dawn.is-day { color: #fca5a5; }
+.clock-bar .clock-dawn.is-urgent { color: #fbbf24; }
+.clock-bar-actions { display: inline-flex; gap: 4px; }
+.clock-bar-btn {
+  min-width: 34px; height: 26px; padding: 0 8px; cursor: pointer;
+  font-family: var(--font-header); font-size: 0.72rem; color: var(--text-secondary);
+  background: rgba(0, 0, 0, 0.3); border: 1px solid var(--border-accent); border-radius: 13px;
+}
+.clock-bar-btn:hover { color: var(--gold-bright); border-color: var(--gold-bright); }
+.clock-bar-edit {
+  position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  z-index: 120; width: min(560px, 94vw);
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;
+  padding: 10px; background: var(--bg-card);
+  border: 1px solid var(--border-accent); border-radius: 6px; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7);
+}
+.clock-bar-edit[hidden] { display: none; }
+.clock-bar-custom > span { display: flex; gap: 4px; }
+.clock-bar-custom input { min-width: 0; }
+body.theme-parchment .clock-bar { background: rgba(104, 78, 40, 0.16); }
+body.theme-parchment .clock-bar-edit { background: #ccb283; }
+@media (max-width: 768px) {
+  .clock-bar { border-radius: 0; margin-bottom: 8px; font-size: 0.74rem; }
+  .clock-bar-edit { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media print { .clock-bar { display: none !important; } }

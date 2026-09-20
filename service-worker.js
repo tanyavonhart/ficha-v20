@@ -6,7 +6,7 @@
  * - Discord, hospedagem de imagens e qualquer POST passam direto, sem cache.
  * Ao publicar uma versão nova, troque CACHE_VERSION.
  */
-const CACHE_VERSION = 'ficha-v20-2.1';
+const CACHE_VERSION = 'ficha-v20-2.4';
 const CORE_CACHE = `${CACHE_VERSION}-core`;
 const FONT_CACHE = 'ficha-v20-fonts';
 
@@ -20,6 +20,9 @@ const CORE_FILES = [
   './audio-lareira.ogg',
 
   './qualidades-defeitos-data.js',
+  './rituais-data.js',
+  './feiticos-data.js',
+  './poderes-disciplinas-data.js',
   './manifest.webmanifest',
   './icons/apple-touch-icon.png',
   './icons/icon-192.png',

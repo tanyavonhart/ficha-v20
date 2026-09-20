@@ -1,5 +1,18 @@
 # Histórico de versões
 
+## 2.4
+- Os quadros se reajustam sozinhos ao ocultar, mostrar, minimizar ou trocar de layout, procurando a coluna mais curta — sem nunca sobrepor.
+- O Ponto de Sangue fica fixo na coluna do meio; a ordem padrão é respeitada dentro de cada coluna.
+- Relógio da Crônica virou uma barra fina no topo da página, com +10m, +1h, 🛌 Dormir e um painel de ajuste que abre no ✎.
+
+## 2.3.1
+- Correção: o remanejamento automático da 2.3 fazia quadros ficarem por cima de outros. Os quadros voltaram à ordem padrão, com o Ponto de Sangue no centro.
+- Espaçamento fluido por CSS: colunas e intervalos acompanham a largura da tela e cada quadro ocupa só a própria altura.
+- Proteção nova: um quadro arrastado que cubra outro volta sozinho ao lugar, com aviso.
+
+## 2.3
+- Ajustes de espaçamento entre os quadros (substituídos na 2.3.1).
+
 ## 2.1
 - Sincronização entre aparelhos por código e PIN (função serverless com Netlify Blobs), com mesclagem pela versão mais recente e envio automático opcional.
 - Sugestões de Antecedentes (21) e de Especializações (129, filtradas pelo traço digitado).
