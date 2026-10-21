@@ -1004,6 +1004,43 @@ const CombatManager = {
 
   usesStrength(w) { return w && w.damageAttr === 'attributes.physical.strength'; },
 
+  /** Regra do V20: sucessos do ataque além do primeiro viram dados de dano. Pode ser desligada por ficha. */
+  extraDamageOn(char) { return !(char && char.settings && char.settings.extraSuccessDamage === false); },
+
+  /** Dados de dano vindos do último ataque desta arma (0 se a regra estiver desligada). */
+  pendingExtra(char, w) {
+    if (!this.extraDamageOn(char) || !this.lastAttack || this.lastAttack.weaponId !== w.id) return 0;
+    return this.lastAttack.extra;
+  },
+
+  toggleExtraDamage() {
+    const char = AppState.activeCharacter;
+    if (!char) return;
+    if (!char.settings) char.settings = {};
+    char.settings.extraSuccessDamage = !this.extraDamageOn(char);
+    AppState.saveToStorage();
+    const live = LinkCableSystem.preset;
+    if (live && live.kind === 'damage') this.refreshPreset(live, char);
+    this.render(char);
+    if (live || LinkCableSystem.selectedNodes.length) LinkCableSystem.updateDock();
+    showToast(this.extraDamageOn(char)
+      ? 'Sucessos extras do ataque voltam a somar dados de dano.'
+      : 'Sucessos extras do ataque não somam mais dano.', 'info');
+  },
+
+  renderExtraDamageToggle(char) {
+    const on = this.extraDamageOn(char);
+    const chip = document.getElementById('toggle-extra-damage');
+    if (chip) {
+      chip.setAttribute('aria-pressed', String(on));
+      chip.classList.toggle('is-on', on);
+      const text = chip.querySelector('.chip-text');
+      if (text) text.textContent = on ? 'Sucessos extras somam dano' : 'Sucessos extras não somam dano';
+    }
+    const hint = document.getElementById('weapons-hint-extra');
+    if (hint) hint.textContent = on ? 'Sucessos além do primeiro viram dados extras de dano.' : 'Sucessos além do primeiro não mudam o dano.';
+  },
+
   abilityPaths() {
     return Array.from(document.querySelectorAll('.trait-row[data-trait^="abilities."]')).map(r => r.getAttribute('data-trait'));
   },
@@ -1154,6 +1191,7 @@ const CombatManager = {
 
     this.renderSoak(char);
     this.renderCollapseAll(char);
+    this.renderExtraDamageToggle(char);
   },
 
   renderCollapseAll(char) {
@@ -1196,9 +1234,8 @@ const CombatManager = {
     const parts = [];
     if (w.damageAttr) parts.push({ label: getTraitLabel(w.damageAttr), value: getTraitValue(char, w.damageAttr), ref: w.damageAttr });
     if (w.damageBonus) parts.push({ label: 'Arma', value: parseInt(w.damageBonus, 10) || 0 });
-    if (this.lastAttack && this.lastAttack.weaponId === w.id && this.lastAttack.extra > 0) {
-      parts.push({ label: 'Sucessos extras', value: this.lastAttack.extra });
-    }
+    const extra = this.pendingExtra(char, w);
+    if (extra > 0) parts.push({ label: 'Sucessos extras', value: extra });
     let used = 0;
     const pot = this.usesStrength(w) && PhysicalDisciplines.enabled() ? this.potenceLevel(char) : 0;
     if (pot > 0) {
@@ -1242,7 +1279,7 @@ const CombatManager = {
     const atk = this.attackPool(char, w);
     const dmg = this.damagePool(char, w);
     const type = DAMAGE_TYPES[w.damageType] || DAMAGE_TYPES.lethal;
-    const extra = (this.lastAttack && this.lastAttack.weaponId === w.id) ? this.lastAttack.extra : 0;
+    const extra = this.pendingExtra(char, w);
     const potUsed = dmg.potence ? PhysicalDisciplines.activeLevel(char, 'potence') : 0;
     const potTxt = dmg.potence ? ` <span class="weapon-potence">(inclui Potência ${dmg.potence}${potUsed ? `, ${potUsed} automático${potUsed > 1 ? 's' : ''}` : ''})</span>` : '';
     const atkExtra = atk.extra ? ` <span class="weapon-potence">(inclui ${atk.extra} de ${w.attackAttr === DEX_REF ? 'Celeridade' : 'Potência'})</span>` : '';
@@ -1288,7 +1325,8 @@ const CombatManager = {
     if (preset.kind === 'attack') {
       this.lastAttack = { weaponId: preset.meta.weaponId, extra: Math.max(0, rollState.netSuccesses - 1) };
       if (rollState.netSuccesses > 0) {
-        const extraMsg = this.lastAttack.extra ? ` (+${this.lastAttack.extra} dado(s) de dano)` : '';
+        const extra = this.pendingExtra(AppState.activeCharacter, { id: preset.meta.weaponId });
+        const extraMsg = extra ? ` (+${extra} dado(s) de dano)` : '';
         showToast(`Ataque acertou${extraMsg}. Clique em “Rolar dano” na arma.`, 'success');
       }
       this.render(AppState.activeCharacter);
@@ -1617,7 +1655,7 @@ const SpellManager = {
     if (typeof sp.primary !== 'string') sp.primary = defs.primary;
     if (typeof sp.secondary !== 'string') sp.secondary = defs.secondary;
     if (!SPELL_COST_TYPES[sp.costType]) sp.costType = defs.costType;
-    sp.level = clampInt(sp.level, 1, 9, 1);
+    sp.level = clampInt(sp.level, 1, 10, 1);
     if (typeof sp.name !== 'string') sp.name = '';
     if (typeof sp.description !== 'string') sp.description = '';
     if (!SPELL_TRADITIONS[sp.tradition]) sp.tradition = 'taumaturgia';
@@ -2009,7 +2047,7 @@ const SpellManager = {
       syncArrow();
 
       const level = this.select(
-        Array.from({ length: 9 }, (_, i) => ({ value: i + 1, label: `Nível ${i + 1}` })),
+        Array.from({ length: 10 }, (_, i) => ({ value: i + 1, label: `Nível ${i + 1}` })),
         sp.level, 'spell-select spell-level', 'Nível do feitiço'
       );
 
@@ -2201,7 +2239,7 @@ const SpellManager = {
         if (!desc.hidden) desc.focus();
       });
       level.addEventListener('change', e => {
-        const newLevel = clampInt(e.target.value, 1, 9, 1);
+        const newLevel = clampInt(e.target.value, 1, 10, 1);
         if (sp.kind === 'ritual' && !XPManager.adjustItem(char, `rit:${sp.id}`, newLevel * 2, `${sp.name || 'Ritual'} nível ${newLevel}`)) {
           e.target.value = String(sp.level);
           return;
@@ -2708,7 +2746,7 @@ const XPManager = {
   maxFor(ref) {
     if (String(ref).startsWith('virtues.')) return 5;
     if (ref === 'status.humanity' || ref === 'status.willpower_perm') return 10;
-    return 9;
+    return ELDER_TRAIT_MAX;
   },
 
   /** Na primeira vez, o saldo automático começa dos campos Total e Gasto. */
@@ -3130,7 +3168,7 @@ const XPManager = {
     }
     const amount = document.getElementById('xp-gain-amount');
     if (amount && isRitual && (amount.dataset.auto === '1' || !amount.value)) {
-      const lvl = clampInt((document.getElementById('xp-ritual-level') || {}).value, 1, 9, 1);
+      const lvl = clampInt((document.getElementById('xp-ritual-level') || {}).value, 1, 10, 1);
       amount.value = lvl * 2;
       amount.dataset.auto = '1';
     }
@@ -3163,7 +3201,7 @@ const XPManager = {
       if (!afford.ok) { showToast(this.insufficientMsg(text || 'Este gasto', amount, afford.available), 'danger'); return; }
       if (category === 'ritual') {
         if (!text) { showToast('Escreva o nome do ritual.', 'danger'); reasonEl.focus(); return; }
-        const level = clampInt(document.getElementById('xp-ritual-level').value, 1, 9, 1);
+        const level = clampInt(document.getElementById('xp-ritual-level').value, 1, 10, 1);
         const tradition = document.getElementById('xp-ritual-tradition').value;
         const addToGrimoire = document.getElementById('xp-ritual-add').checked;
         let ref = `custom:${generateUniqueId()}`;
@@ -3719,7 +3757,7 @@ const GoalPlanner = {
     }
     const cost = document.getElementById('goal-new-cost-preview');
     if (cost) {
-      const lvl = clampInt((document.getElementById('goal-new-level') || {}).value, 1, 9, 1);
+      const lvl = clampInt((document.getElementById('goal-new-level') || {}).value, 1, 10, 1);
       cost.textContent = kind === 'ritual' ? `${lvl * 2} XP` : kind === 'specialty' ? '3 XP' : '';
     }
   },
@@ -3734,7 +3772,7 @@ const GoalPlanner = {
     const g = { id: generateUniqueId(), kind, createdAt: Date.now() };
     if (kind === 'ritual') {
       g.name = name;
-      g.level = clampInt(document.getElementById('goal-new-level').value, 1, 9, 1);
+      g.level = clampInt(document.getElementById('goal-new-level').value, 1, 10, 1);
       g.tradition = document.getElementById('goal-new-tradition').value;
     } else if (kind === 'specialty') {
       g.name = name;
@@ -6892,7 +6930,7 @@ const CommandRoller = {
 // Passos: conceito e clã → Atributos 7/5/3 → Habilidades 13/9/5 → Vantagens
 // → Características derivadas → Pontos de Bônus → Ficha final.
 // =============================================================================
-const APP_VERSION = '2.4';
+const APP_VERSION = '2.6';
 
 const WIZ_ATTRS = {
   physical: { label: 'Físicos', keys: ['strength', 'dexterity', 'stamina'] },
@@ -9470,7 +9508,7 @@ const GrimoireCatalog = {
     const base = {
       kind,
       name: item.nome,
-      level: clampInt(item.nivel, 1, 9, 1),
+      level: clampInt(item.nivel, 1, 10, 1),
       description: item.trilha ? `${item.trilha}: ${item.efeito || ''}` : (item.efeito || '')
     };
     if (kind === 'power') {
@@ -10444,6 +10482,7 @@ const ExtEvents = {
 
     // Combate
     this.bind('btn-add-weapon', 'click', () => CombatManager.addWeapon());
+    this.bind('toggle-extra-damage', 'click', () => CombatManager.toggleExtraDamage());
     this.bind('btn-soak-roll', 'click', () => CombatManager.soak());
     this.bind('btn-soak-apply', 'click', () => CombatManager.soak({ apply: true }));
     this.bind('btn-damage-heal-one', 'click', () => CombatManager.healFromDamage(1));

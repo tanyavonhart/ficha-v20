@@ -109,7 +109,7 @@ const THEME_PRESETS = {
 const GENERATION_ORDER = ['15ª', '14ª', '13ª', '12ª', '11ª', '10ª', '9ª', '8ª', '7ª', '6ª', '5ª', '4ª', '3ª'];
 
 /** Máximo de pontos exibidos para Atributos, Habilidades e Disciplinas (patamar de Ancião). */
-const ELDER_TRAIT_MAX = 9;
+const ELDER_TRAIT_MAX = 10;
 
 const ThemeManager = {
   currentTheme: {
@@ -1885,7 +1885,7 @@ const UIRenderer = {
       const row = container.closest('[data-trait]') || container;
       const traitPath = row.getAttribute('data-trait');
       const min = parseInt(container.getAttribute('data-min') || '0', 10);
-      const max = parseInt(container.getAttribute('data-max') || '9', 10);
+      const max = parseInt(container.getAttribute('data-max') || String(ELDER_TRAIT_MAX), 10);
       let currentVal = getNestedValue(char, traitPath);
 
       if (currentVal === undefined || currentVal === null) {
@@ -2090,7 +2090,7 @@ const UIRenderer = {
       const discMax = ELDER_TRAIT_MAX;
       const discLimit = getGenerationRule(char.header ? char.header.generation : '13ª').maxTrait;
       const dotsContainer = document.createElement('div');
-      dotsContainer.className = 'dots-group dots-9';
+      dotsContainer.className = 'dots-group dots-10';
       dotsContainer.setAttribute('data-min', '0');
       dotsContainer.setAttribute('data-max', String(discMax));
       dotsContainer.setAttribute('data-val', disc.level || 0);
@@ -2177,12 +2177,12 @@ const UIRenderer = {
       });
 
       const dotsContainer = document.createElement('div');
-      dotsContainer.className = 'dots-group dots-9';
+      dotsContainer.className = 'dots-group dots-10';
       dotsContainer.setAttribute('data-min', '0');
-      dotsContainer.setAttribute('data-max', '9');
+      dotsContainer.setAttribute('data-max', String(ELDER_TRAIT_MAX));
       dotsContainer.setAttribute('data-val', spec.level || 0);
 
-      this.buildDotsHtml(dotsContainer, spec.level || 0, 0, 9, (newVal) => {
+      this.buildDotsHtml(dotsContainer, spec.level || 0, 0, ELDER_TRAIT_MAX, (newVal) => {
         spec.level = newVal;
         AppState.saveToStorage();
         this.renderDynamicSpecializations(AppState.activeCharacter);
@@ -2250,14 +2250,14 @@ const UIRenderer = {
       });
 
       const dotsContainer = document.createElement('div');
-      dotsContainer.className = 'dots-group dots-9';
+      dotsContainer.className = 'dots-group dots-10';
       dotsContainer.setAttribute('data-min', '0');
-      dotsContainer.setAttribute('data-max', '9');
+      dotsContainer.setAttribute('data-max', String(ELDER_TRAIT_MAX));
       dotsContainer.setAttribute('data-val', bg.level || 0);
       if (!bg.id) bg.id = generateUniqueId();
       dotsContainer.dataset.xpRef = `bg:${bg.id}`;
 
-      this.buildDotsHtml(dotsContainer, bg.level || 0, 0, 9, (newVal) => {
+      this.buildDotsHtml(dotsContainer, bg.level || 0, 0, ELDER_TRAIT_MAX, (newVal) => {
         bg.level = newVal;
         AppState.saveToStorage();
         this.renderDynamicBackgrounds(AppState.activeCharacter);
@@ -2314,14 +2314,14 @@ const UIRenderer = {
       });
 
       const dotsContainer = document.createElement('div');
-      dotsContainer.className = 'dots-group dots-9';
+      dotsContainer.className = 'dots-group dots-10';
       dotsContainer.setAttribute('data-min', '0');
-      dotsContainer.setAttribute('data-max', '9');
+      dotsContainer.setAttribute('data-max', String(ELDER_TRAIT_MAX));
       dotsContainer.setAttribute('data-val', pth.level || 0);
       if (!pth.id) pth.id = generateUniqueId();
       dotsContainer.dataset.xpRef = `path:${pth.id}`;
 
-      this.buildDotsHtml(dotsContainer, pth.level || 0, 0, 9, (newVal) => {
+      this.buildDotsHtml(dotsContainer, pth.level || 0, 0, ELDER_TRAIT_MAX, (newVal) => {
         pth.level = newVal;
         AppState.saveToStorage();
         this.renderDynamicPaths(AppState.activeCharacter);
@@ -2425,7 +2425,7 @@ const UIRenderer = {
         <span>Geração: <strong>${rule.label || gen}</strong></span> • 
         <span>Max: <strong>${rule.maxBlood} pts</strong></span> • 
         <span>Gasto/Turno: <strong>${rule.bloodPerTurn} pt${rule.bloodPerTurn > 1 ? 's' : ''}</strong></span> • 
-        <span title="Limite oficial do livro. A ficha permite até 9 pontos para Anciões.">Limite oficial: <strong>${rule.maxTrait}</strong></span>
+        <span title="Limite oficial do livro. A ficha permite até 10 pontos para Anciões.">Limite oficial: <strong>${rule.maxTrait}</strong></span>
       `;
     }
     BloodMeter.render(char);

@@ -2247,6 +2247,8 @@ input[type="number"] {
 .weapon-row.dmg-aggravated { border-left-color: var(--gold-bright); }
 .weapon-line { grid-area: l1; display: flex; align-items: center; gap: 6px; min-width: 0; flex-wrap: wrap; }
 .weapon-line-formula { grid-area: l2; }
+.weapons-rules { display: flex; flex-wrap: wrap; gap: 6px; margin: -4px 0 10px; }
+.weapons-rules .dock-chip { white-space: normal; text-align: left; }
 .weapon-summary { grid-area: sum; font-size: 0.86rem; color: var(--text-secondary); }
 .weapon-summary strong { color: var(--gold-bright); }
 .weapon-actions { grid-area: actions; display: flex; flex-direction: column; justify-content: center; gap: 4px; align-items: stretch; }
@@ -2679,8 +2681,8 @@ body.dock-open .sheet-viewport { margin-bottom: 340px; }
 .dots-value.is-zero { color: var(--text-muted); border-color: var(--border-subtle); }
 .dots-track-box { display: flex; align-items: center; justify-content: center; }
 
-/* Pontos acima de 5: mesma escala de 9 do site publicado */
-.dots-9 .dot { width: 10px; height: 10px; }
+/* Pontos acima de 5: traços vão até 10, no tamanho do site publicado */
+.dots-9 .dot, .dots-10 .dot { width: 10px; height: 10px; }
 
 /* Título de seção com cadeado */
 .section-banner { display: flex; align-items: center; justify-content: center; gap: 12px; }

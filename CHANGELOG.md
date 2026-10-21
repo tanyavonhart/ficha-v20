@@ -1,5 +1,13 @@
 # Histórico de versões
 
+## 2.6
+- Arsenal: novo botão "Sucessos extras somam dano" no quadro Armas & Ataques. Desligado, os sucessos do ataque além do primeiro não viram dados de dano. A escolha fica salva em cada ficha (vai junto na sincronização e na exportação) e funciona com o quadro travado.
+
+## 2.5
+- Limite de Ancião subiu de 9 para 10: Atributos, Habilidades, Disciplinas, Antecedentes, Trilhas e Especializações mostram 10 pontos. A 3ª Geração enfim alcança o 10 que o livro dá a ela.
+- XP: comprar pontos agora vai até o 10.
+- Rituais e Feitiços: nível vai até 10 (Grimório, Objetivos e ganho de XP). A dificuldade automática de ritual continua com teto 9.
+
 ## 2.4
 - Os quadros se reajustam sozinhos ao ocultar, mostrar, minimizar ou trocar de layout, procurando a coluna mais curta — sem nunca sobrepor.
 - O Ponto de Sangue fica fixo na coluna do meio; a ordem padrão é respeitada dentro de cada coluna.
